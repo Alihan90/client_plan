@@ -5,11 +5,14 @@ import '../models/appointment.dart';
 class WidgetSyncService {
   static const String androidWidgetProvider = 'PlannerWidgetProvider';
   static const String iosWidgetKind = 'PlannerWidget';
+  static const String iosAppGroupId = 'group.com.example.clientPlanner';
 
   static Future<void> syncTodayAppointments(
     List<Appointment> all,
     DateTime targetDay,
   ) async {
+    await HomeWidget.setAppGroupId(iosAppGroupId);
+
     final now = DateTime.now();
     final norm = DateTime(targetDay.year, targetDay.month, targetDay.day);
     final dayItems = all.where((a) => a.normalizedDate == norm).toList()
