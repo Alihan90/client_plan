@@ -258,6 +258,19 @@ class PlannerController extends ChangeNotifier {
     _syncWidget();
   }
 
+  void toggleQuickStatus(String id, bool targetStatus) {
+    final index = _appointments.indexWhere((a) => a.id == id);
+    if (index == -1) return;
+    final current = _appointments[index];
+    final bool? nextStatus = current.isCompleted == targetStatus ? null : targetStatus;
+    _appointments[index] = current.copyWith(
+      isCompleted: nextStatus,
+      clearManualStatus: nextStatus == null,
+    );
+    notifyListeners();
+    _syncWidget();
+  }
+
   void deleteAppointment(String id) {
     _appointments.removeWhere((a) => a.id == id);
     notifyListeners();
