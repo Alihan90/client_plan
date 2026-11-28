@@ -1,39 +1,25 @@
-import 'package:flutter/material.dart';
-
-enum AppointmentStatus {
-  waiting,   // Ожидание (серый)
-  completed, // Выполнено (зеленый)
-  missed,    // Не выполнено (красный)
-}
-
 class Appointment {
   final String id;
   final String clientName;
-  final String serviceNote;
-  final DateTime date; // Дата без времени (YYYY-MM-DD)
-  final int startMinutes; // Минуты от начала дня, например 9:30 -> 570
+  final String serviceName;
+  final DateTime date;
+  final int startMinutes;
   final int durationMinutes;
-  final AppointmentStatus status;
+  final bool? isCompleted;
 
   const Appointment({
     required this.id,
     required this.clientName,
-    required this.serviceNote,
+    required this.serviceName,
     required this.date,
     required this.startMinutes,
     this.durationMinutes = 60,
-    this.status = AppointmentStatus.waiting,
+    this.isCompleted,
   });
 
   DateTime get normalizedDate => DateTime(date.year, date.month, date.day);
 
-  DateTime get scheduledDateTime => DateTime(
-        date.year,
-        date.month,
-        date.day,
-        startMinutes ~/ 60,
-        startMinutes % 60,
-      );
+  int get endMinutes => startMinutes + durationMinutes;
 
   String get formattedTime {
     final h = (startMinutes ~/ 60).toString().padLeft(2, '0');
@@ -41,83 +27,71 @@ class Appointment {
     return '$h:$m';
   }
 
-  Color cardColor(BuildContext context, DateTime now) {
-    switch (status) {
-      case AppointmentStatus.completed:
-        return Colors.green.shade100;
-      case AppointmentStatus.missed:
-        return Colors.red.shade100;
-      case AppointmentStatus.waiting:
-        return now.isBefore(scheduledDateTime)
-            ? Colors.grey.shade200
-            : Colors.grey.shade300;
+  String statusLabel(DateTime now, {String lang = 'ru'}) {
+    if (isCompleted == true) {
+      switch (lang) {
+        case 'uk':
+          return 'Виконано';
+        case 'en':
+          return 'Completed';
+        default:
+          return 'Выполнено';
+      }
     }
-  }
-
-  Color accentColor(DateTime now) {
-    switch (status) {
-      case AppointmentStatus.completed:
-        return Colors.green.shade700;
-      case AppointmentStatus.missed:
-        return Colors.red.shade700;
-      case AppointmentStatus.waiting:
-        return now.isBefore(scheduledDateTime)
-            ? Colors.grey.shade600
-            : Colors.grey.shade700;
+    if (isCompleted == false) {
+      switch (lang) {
+        case 'uk':
+          return 'Не виконано';
+        case 'en':
+          return 'Missed';
+        default:
+          return 'Не выполнено';
+      }
     }
-  }
 
-  String statusLabel(DateTime now) {
-    switch (status) {
-      case AppointmentStatus.completed:
-        return 'Выполнено';
-      case AppointmentStatus.missed:
-        return 'Не выполнено';
-      case AppointmentStatus.waiting:
-        return now.isBefore(scheduledDateTime) ? 'Ожидание' : 'Время пришло';
+    final today = DateTime(now.year, now.month, now.day);
+    final nowMinutes = now.hour * 60 + now.minute;
+
+    if (normalizedDate.isBefore(today) ||
+        (normalizedDate == today && endMinutes < nowMinutes)) {
+      switch (lang) {
+        case 'uk':
+          return 'Не виконано';
+        case 'en':
+          return 'Missed';
+        default:
+          return 'Не выполнено';
+      }
+    }
+
+    switch (lang) {
+      case 'uk':
+        return 'Очікування';
+      case 'en':
+        return 'Pending';
+      default:
+        return 'Ожидание';
     }
   }
 
   Appointment copyWith({
     String? id,
     String? clientName,
-    String? serviceNote,
+    String? serviceName,
     DateTime? date,
     int? startMinutes,
     int? durationMinutes,
-    AppointmentStatus? status,
+    bool? isCompleted,
+    bool clearManualStatus = false,
   }) {
     return Appointment(
       id: id ?? this.id,
       clientName: clientName ?? this.clientName,
-      serviceNote: serviceNote ?? this.serviceNote,
+      serviceName: serviceName ?? this.serviceName,
       date: date ?? this.date,
       startMinutes: startMinutes ?? this.startMinutes,
       durationMinutes: durationMinutes ?? this.durationMinutes,
-      status: status ?? this.status,
+      isCompleted: clearManualStatus ? null : (isCompleted ?? this.isCompleted),
     );
   }
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'clientName': clientName,
-        'serviceNote': serviceNote,
-        'date': normalizedDate.toIso8601String(),
-        'startMinutes': startMinutes,
-        'durationMinutes': durationMinutes,
-        'status': status.name,
-      };
-
-  factory Appointment.fromJson(Map<String, dynamic> json) => Appointment(
-        id: json['id'] as String,
-        clientName: json['clientName'] as String,
-        serviceNote: json['serviceNote'] as String? ?? '',
-        date: DateTime.parse(json['date'] as String),
-        startMinutes: json['startMinutes'] as int,
-        durationMinutes: json['durationMinutes'] as int? ?? 60,
-        status: AppointmentStatus.values.firstWhere(
-          (e) => e.name == json['status'],
-          orElse: () => AppointmentStatus.waiting,
-        ),
-      );
 }
