@@ -60,20 +60,6 @@ class PlannerHomePage extends StatelessWidget {
 
   const PlannerHomePage({super.key, required this.controller});
 
-  Color _statusColor(Appointment a, DateTime now) {
-    final label = a.statusLabel(now, lang: 'en');
-    if (label == 'Completed') return const Color(0xFF15803D);
-    if (label == 'Missed') return const Color(0xFFB91C1C);
-    return const Color(0xFF64748B);
-  }
-
-  Color _statusBgColor(Appointment a, DateTime now) {
-    final label = a.statusLabel(now, lang: 'en');
-    if (label == 'Completed') return const Color(0xFFDCFCE7);
-    if (label == 'Missed') return const Color(0xFFFEE2E2);
-    return const Color(0xFFF1F5F9);
-  }
-
   Future<void> _openCreateDialog(BuildContext context, DateTime date) async {
     FocusScope.of(context).unfocus();
     await showDialog<void>(
@@ -310,40 +296,56 @@ class _DayView extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final item = items[index];
-        final color = _colorFor(item);
-        final bg = _bgFor(item);
-        final statusText = item.statusLabel(now, lang: controller.languageCode);
+        final isDone = item.isCompleted == true;
+        final isMissed = item.isCompleted == false;
+
+        Color rowBg = const Color(0xFFF1F5F9);
+        Color borderColor = const Color(0xFFCBD5E1);
+        Color timeBadgeBg = const Color(0xFFE2E8F0);
+        Color timeTextColor = const Color(0xFF334155);
+
+        if (isDone) {
+          rowBg = const Color(0xFFECFDF5);
+          borderColor = const Color(0xFF86EFAC);
+          timeBadgeBg = const Color(0xFFD1FAE5);
+          timeTextColor = const Color(0xFF15803D);
+        } else if (isMissed) {
+          rowBg = const Color(0xFFFEF2F2);
+          borderColor = const Color(0xFFFCA5A5);
+          timeBadgeBg = const Color(0xFFFEE2E2);
+          timeTextColor = const Color(0xFFB91C1C);
+        }
 
         return Material(
-          color: Colors.white,
+          color: rowBg,
           borderRadius: BorderRadius.circular(16),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: () => onEdit(item),
             child: Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                border: Border.all(color: borderColor),
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDFA),
+                      color: timeBadgeBg,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       item.formattedTime,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: Color(0xFF0F766E),
+                        fontSize: 13,
+                        color: timeTextColor,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,21 +371,21 @@ class _DayView extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: bg,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      statusText,
-                      style: TextStyle(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
+                  const SizedBox(width: 6),
+                  _StatusActionButton(
+                    icon: Icons.check_rounded,
+                    active: isDone,
+                    activeColor: const Color(0xFF16A34A),
+                    activeBg: const Color(0xFFDCFCE7),
+                    onTap: () => controller.toggleQuickStatus(item.id, true),
+                  ),
+                  const SizedBox(width: 6),
+                  _StatusActionButton(
+                    icon: Icons.close_rounded,
+                    active: isMissed,
+                    activeColor: const Color(0xFFDC2626),
+                    activeBg: const Color(0xFFFEE2E2),
+                    onTap: () => controller.toggleQuickStatus(item.id, false),
                   ),
                 ],
               ),
@@ -393,19 +395,46 @@ class _DayView extends StatelessWidget {
       },
     );
   }
+}
 
-  Color _colorFor(Appointment item) {
-    final s = item.statusLabel(now, lang: 'en');
-    if (s == 'Completed') return const Color(0xFF15803D);
-    if (s == 'Missed') return const Color(0xFFB91C1C);
-    return const Color(0xFF64748B);
-  }
+class _StatusActionButton extends StatelessWidget {
+  final IconData icon;
+  final bool active;
+  final Color activeColor;
+  final Color activeBg;
+  final VoidCallback onTap;
 
-  Color _bgFor(Appointment item) {
-    final s = item.statusLabel(now, lang: 'en');
-    if (s == 'Completed') return const Color(0xFFDCFCE7);
-    if (s == 'Missed') return const Color(0xFFFEE2E2);
-    return const Color(0xFFF1F5F9);
+  const _StatusActionButton({
+    required this.icon,
+    required this.active,
+    required this.activeColor,
+    required this.activeBg,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: active ? activeBg : Colors.white.withValues(alpha: 0.75),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: active ? activeColor : const Color(0xFFCBD5E1),
+            width: active ? 1.5 : 1,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 19,
+          color: active ? activeColor : const Color(0xFF64748B),
+        ),
+      ),
+    );
   }
 }
 
