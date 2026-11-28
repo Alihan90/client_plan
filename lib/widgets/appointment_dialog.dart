@@ -1,32 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/appointment.dart';
-
-class AppointmentFormResult {
-  final String clientName;
-  final String serviceNote;
-  final DateTime date;
-  final TimeOfDay time;
-  final AppointmentStatus status;
-  final List<DateTime> duplicateDates;
-
-  AppointmentFormResult({
-    required this.clientName,
-    required this.serviceNote,
-    required this.date,
-    required this.time,
-    required this.status,
-    required this.duplicateDates,
-  });
-}
+import '../state/planner_controller.dart';
 
 class AppointmentDialog extends StatefulWidget {
-  final DateTime initialDate;
+  final PlannerController controller;
   final Appointment? existing;
+  final DateTime initialDate;
 
   const AppointmentDialog({
     super.key,
-    required this.initialDate,
+    required this.controller,
     this.existing,
+    required this.initialDate,
   });
 
   @override
@@ -34,213 +20,335 @@ class AppointmentDialog extends StatefulWidget {
 }
 
 class _AppointmentDialogState extends State<AppointmentDialog> {
-  late final TextEditingController _nameController;
-  late final TextEditingController _noteController;
-  late DateTime _selectedDate;
-  late TimeOfDay _selectedTime;
-  late AppointmentStatus _status;
-  bool _repeatEnabled = false;
-  final Set<int> _selectedWeekdays = {};
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _clientCtrl;
+  late final TextEditingController _serviceCtrl;
+  late final FocusNode _clientFocusNode;
 
-  static const Map<int, String> _weekdayLabels = {
-    1: 'Пн',
-    2: 'Вт',
-    3: 'Ср',
-    4: 'Чт',
-    5: 'Пт',
-    6: 'Сб',
-    7: 'Вс',
-  };
+  late DateTime _selectedDate;
+  late int _selectedHour;
+  late int _selectedMinute;
+  bool _repeatUntilEndOfMonth = false;
+  final Set<int> _repeatWeekdays = {};
+  bool? _manualStatus;
+
+  static const List<int> _minuteSteps = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
 
   @override
   void initState() {
     super.initState();
     final ex = widget.existing;
-    _nameController = TextEditingController(text: ex?.clientName ?? '');
-    _noteController = TextEditingController(text: ex?.serviceNote ?? '');
-    _selectedDate = ex?.normalizedDate ?? widget.initialDate;
-    _selectedTime = ex != null
-        ? TimeOfDay(
-            hour: ex.startMinutes ~/ 60,
-            minute: ex.startMinutes % 60,
-          )
-        : const TimeOfDay(hour: 10, minute: 0);
-    _status = ex?.status ?? AppointmentStatus.waiting;
+    _clientCtrl = TextEditingController(text: ex?.clientName ?? '');
+    _serviceCtrl = TextEditingController(text: ex?.serviceName ?? '');
+    _clientFocusNode = FocusNode();
+
+    _selectedDate = ex?.normalizedDate ??
+        DateTime(widget.initialDate.year, widget.initialDate.month, widget.initialDate.day);
+
+    final startMins = ex?.startMinutes ?? (9 * 60);
+    _selectedHour = (startMins ~/ 60).clamp(0, 23);
+    final rawMinute = startMins % 60;
+    _selectedMinute = _minuteSteps.reduce(
+      (a, b) => (a - rawMinute).abs() < (b - rawMinute).abs() ? a : b,
+    );
+
+    _repeatWeekdays.add(_selectedDate.weekday);
+    _manualStatus = ex?.isCompleted;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 120), () {
+        if (mounted && !_clientFocusNode.hasFocus) {
+          _clientFocusNode.requestFocus();
+        }
+      });
+    });
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _noteController.dispose();
+    _clientFocusNode.dispose();
+    _clientCtrl.dispose();
+    _serviceCtrl.dispose();
     super.dispose();
   }
 
-  List<DateTime> _buildDuplicateDates() {
-    if (!_repeatEnabled || _selectedWeekdays.isEmpty) return const [];
-    final result = <DateTime>[];
-    final lastDayOfMonth = DateTime(_selectedDate.year, _selectedDate.month + 1, 0);
-
-    var cursor = _selectedDate.add(const Duration(days: 1));
-    while (!cursor.isAfter(lastDayOfMonth)) {
-      if (_selectedWeekdays.contains(cursor.weekday)) {
-        result.add(DateTime(cursor.year, cursor.month, cursor.day));
-      }
-      cursor = cursor.add(const Duration(days: 1));
-    }
-    return result;
-  }
-
   Future<void> _pickDate() async {
+    FocusScope.of(context).unfocus();
     final picked = await showDatePicker(
       context: context,
+      locale: widget.controller.locale,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
     );
     if (picked != null) {
-      setState(() => _selectedDate = picked);
+      setState(() {
+        _selectedDate = DateTime(picked.year, picked.month, picked.day);
+        if (_repeatWeekdays.isEmpty) {
+          _repeatWeekdays.add(_selectedDate.weekday);
+        }
+      });
     }
   }
 
-  Future<void> _pickTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: _selectedTime,
-    );
-    if (picked != null) {
-      setState(() => _selectedTime = picked);
-    }
+  void _setQuickTime(int hour, int minute) {
+    setState(() {
+      _selectedHour = hour;
+      _selectedMinute = minute;
+    });
   }
 
   void _submit() {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) return;
+    if (!_formKey.currentState!.validate()) return;
+    final startMinutes = _selectedHour * 60 + _selectedMinute;
 
-    Navigator.of(context).pop(
-      AppointmentFormResult(
-        clientName: name,
-        serviceNote: _noteController.text.trim(),
+    if (widget.existing != null) {
+      widget.controller.updateAppointment(
+        widget.existing!.copyWith(
+          clientName: _clientCtrl.text,
+          serviceName: _serviceCtrl.text,
+          date: _selectedDate,
+          startMinutes: startMinutes,
+          isCompleted: _manualStatus,
+          clearManualStatus: _manualStatus == null,
+        ),
+      );
+    } else {
+      widget.controller.addAppointment(
+        clientName: _clientCtrl.text,
+        serviceName: _serviceCtrl.text,
         date: _selectedDate,
-        time: _selectedTime,
-        status: _status,
-        duplicateDates: widget.existing == null ? _buildDuplicateDates() : const [],
-      ),
-    );
+        startMinutes: startMinutes,
+        repeatUntilEndOfMonth: _repeatUntilEndOfMonth,
+        repeatWeekdays: _repeatWeekdays,
+        isCompleted: _manualStatus,
+      );
+    }
+
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.existing != null;
+    final c = widget.controller;
+    final dateText = DateFormat('dd.MM.yyyy', c.locale.toString()).format(_selectedDate);
+    final weekdayChips = [
+      (DateTime.monday, c.tr('mon')),
+      (DateTime.tuesday, c.tr('tue')),
+      (DateTime.wednesday, c.tr('wed')),
+      (DateTime.thursday, c.tr('thu')),
+      (DateTime.friday, c.tr('fri')),
+      (DateTime.saturday, c.tr('sat')),
+      (DateTime.sunday, c.tr('sun')),
+    ];
 
     return AlertDialog(
-      title: Text(isEditing ? 'Редактировать запись' : 'Новая запись'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text(
+        widget.existing == null ? c.tr('add_title') : c.tr('edit_title'),
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 19),
+      ),
       content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: _nameController,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Клиент / пациент *',
-                border: OutlineInputBorder(),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                controller: _clientCtrl,
+                focusNode: _clientFocusNode,
+                autofocus: true,
+                textInputAction: TextInputAction.next,
+                keyboardType: TextInputType.name,
+                textCapitalization: TextCapitalization.words,
+                decoration: InputDecoration(
+                  labelText: c.tr('client_label'),
+                  hintText: c.tr('client_hint'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? c.tr('client_error') : null,
               ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _noteController,
-              decoration: const InputDecoration(
-                labelText: 'Услуга / заметка',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _serviceCtrl,
+                textInputAction: TextInputAction.done,
+                keyboardType: TextInputType.text,
+                decoration: InputDecoration(
+                  labelText: c.tr('service_label'),
+                  hintText: c.tr('service_hint'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                ),
+                onFieldSubmitted: (_) => _submit(),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _pickDate,
-                    icon: const Icon(Icons.calendar_today, size: 18),
-                    label: Text(
-                      '${_selectedDate.day.toString().padLeft(2, '0')}.${_selectedDate.month.toString().padLeft(2, '0')}.${_selectedDate.year}',
-                    ),
-                  ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _pickTime,
-                    icon: const Icon(Icons.access_time, size: 18),
-                    label: Text(
-                      '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text('Статус записи:'),
-            const SizedBox(height: 6),
-            SegmentedButton<AppointmentStatus>(
-              segments: const [
-                ButtonSegment(
-                  value: AppointmentStatus.waiting,
-                  label: Text('Ожидание'),
-                ),
-                ButtonSegment(
-                  value: AppointmentStatus.completed,
-                  label: Text('Выполнено'),
-                ),
-                ButtonSegment(
-                  value: AppointmentStatus.missed,
-                  label: Text('Не выполнено'),
-                ),
-              ],
-              selected: {_status},
-              onSelectionChanged: (set) => setState(() => _status = set.first),
-            ),
-            if (!isEditing) ...[
-              const SizedBox(height: 10),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Повторить для постоянного клиента'),
-                subtitle: const Text('Продублировать по выбранным дням до конца месяца'),
-                value: _repeatEnabled,
-                onChanged: (val) => setState(() => _repeatEnabled = val),
+                onPressed: _pickDate,
+                icon: const Icon(Icons.calendar_today_rounded, size: 18),
+                label: Text('${c.tr('date_label')}: $dateText'),
               ),
-              if (_repeatEnabled)
-                Wrap(
-                  spacing: 6,
-                  children: _weekdayLabels.entries.map((entry) {
-                    final active = _selectedWeekdays.contains(entry.key);
-                    return FilterChip(
-                      label: Text(entry.value),
-                      selected: active,
-                      onSelected: (selected) {
-                        setState(() {
-                          if (selected) {
-                            _selectedWeekdays.add(entry.key);
-                          } else {
-                            _selectedWeekdays.remove(entry.key);
-                          }
-                        });
+              const SizedBox(height: 14),
+              Text(
+                c.tr('time_label'),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      value: _selectedHour,
+                      decoration: InputDecoration(
+                        labelText: c.tr('hour'),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                      items: List.generate(24, (h) => h)
+                          .map(
+                            (h) => DropdownMenuItem(
+                              value: h,
+                              child: Text(h.toString().padLeft(2, '0')),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedHour = val);
                       },
-                    );
-                  }).toList(),
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      ':',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      value: _selectedMinute,
+                      decoration: InputDecoration(
+                        labelText: c.tr('minute'),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      ),
+                      items: _minuteSteps
+                          .map(
+                            (m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(m.toString().padLeft(2, '0')),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedMinute = val);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final slot in [(9, 0), (12, 0), (15, 0), (18, 0)])
+                    ActionChip(
+                      label: Text(
+                        '${slot.$1.toString().padLeft(2, '0')}:${slot.$2.toString().padLeft(2, '0')}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      onPressed: () => _setQuickTime(slot.$1, slot.$2),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                c.tr('status_label'),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<bool?>(
+                value: _manualStatus,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
+                items: [
+                  DropdownMenuItem(value: null, child: Text(c.tr('status_auto'))),
+                  DropdownMenuItem(value: true, child: Text(c.tr('status_done'))),
+                  DropdownMenuItem(value: false, child: Text(c.tr('status_missed'))),
+                ],
+                onChanged: (val) => setState(() => _manualStatus = val),
+              ),
+              if (widget.existing == null) ...[
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    c.tr('repeat_until_end'),
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                  value: _repeatUntilEndOfMonth,
+                  onChanged: (val) => setState(() => _repeatUntilEndOfMonth = val),
+                ),
+                if (_repeatUntilEndOfMonth) ...[
+                  Text(
+                    c.tr('repeat_days'),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: weekdayChips.map((d) {
+                      final selected = _repeatWeekdays.contains(d.$1);
+                      return FilterChip(
+                        label: Text(d.$2),
+                        selected: selected,
+                        onSelected: (on) {
+                          setState(() {
+                            if (on) {
+                              _repeatWeekdays.add(d.$1);
+                            } else {
+                              _repeatWeekdays.remove(d.$1);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ],
             ],
-          ],
+          ),
         ),
       ),
       actions: [
+        if (widget.existing != null)
+          TextButton(
+            onPressed: () {
+              widget.controller.deleteAppointment(widget.existing!.id);
+              Navigator.of(context).pop();
+            },
+            child: Text(
+              c.tr('delete'),
+              style: const TextStyle(color: Colors.redAccent),
+            ),
+          ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Отмена'),
+          child: Text(c.tr('cancel')),
         ),
         FilledButton(
           onPressed: _submit,
-          child: const Text('Сохранить'),
+          child: Text(widget.existing == null ? c.tr('create') : c.tr('save')),
         ),
       ],
     );
