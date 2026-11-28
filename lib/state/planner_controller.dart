@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,48 +30,55 @@ class PlannerController extends ChangeNotifier {
   }
 
   Future<void> initStorage() async {
-    _prefs = await SharedPreferences.getInstance();
+    try {
+      _prefs = await SharedPreferences.getInstance().timeout(
+        const Duration(seconds: 3),
+      );
 
-    final savedLang = _prefs?.getString(_kLanguageKey);
-    if (savedLang != null && ['ru', 'uk', 'en'].contains(savedLang)) {
-      _languageCode = savedLang;
-    }
+      final savedLang = _prefs?.getString(_kLanguageKey);
+      if (savedLang != null && ['ru', 'uk', 'en'].contains(savedLang)) {
+        _languageCode = savedLang;
+      }
 
-    _isDarkTheme = _prefs?.getBool(_kDarkThemeKey) ?? false;
-    _compactCardView = _prefs?.getBool(_kCompactCardsKey) ?? false;
+      _isDarkTheme = _prefs?.getBool(_kDarkThemeKey) ?? false;
+      _compactCardView = _prefs?.getBool(_kCompactCardsKey) ?? false;
 
-    final rawJson = _prefs?.getString(_kAppointmentsKey);
-    if (rawJson != null && rawJson.isNotEmpty) {
-      try {
+      final rawJson = _prefs?.getString(_kAppointmentsKey);
+      if (rawJson != null && rawJson.isNotEmpty) {
         final decoded = jsonDecode(rawJson) as List<dynamic>;
         _appointments
           ..clear()
           ..addAll(
-            decoded
-                .map((item) => Appointment.fromJson(item as Map<String, dynamic>)),
+            decoded.map(
+              (item) => Appointment.fromJson(item as Map<String, dynamic>),
+            ),
           );
-      } catch (_) {
-        // Если данные повреждены, не роняем приложение
       }
-    }
 
-    notifyListeners();
-    await _syncWidget();
+      notifyListeners();
+      unawaited(_syncWidget());
+    } catch (_) {
+      // Даже если хранилище недоступно, интерфейс откроется без белого экрана
+    }
   }
 
   Future<void> _persistAppointments() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    _prefs = prefs;
-    final encoded = jsonEncode(_appointments.map((a) => a.toJson()).toList());
-    await prefs.setString(_kAppointmentsKey, encoded);
+    try {
+      final prefs = _prefs ?? await SharedPreferences.getInstance();
+      _prefs = prefs;
+      final encoded = jsonEncode(_appointments.map((a) => a.toJson()).toList());
+      await prefs.setString(_kAppointmentsKey, encoded);
+    } catch (_) {}
   }
 
   Future<void> _persistSettings() async {
-    final prefs = _prefs ?? await SharedPreferences.getInstance();
-    _prefs = prefs;
-    await prefs.setString(_kLanguageKey, _languageCode);
-    await prefs.setBool(_kDarkThemeKey, _isDarkTheme);
-    await prefs.setBool(_kCompactCardsKey, _compactCardView);
+    try {
+      final prefs = _prefs ?? await SharedPreferences.getInstance();
+      _prefs = prefs;
+      await prefs.setString(_kLanguageKey, _languageCode);
+      await prefs.setBool(_kDarkThemeKey, _isDarkTheme);
+      await prefs.setBool(_kCompactCardsKey, _compactCardView);
+    } catch (_) {}
   }
 
   List<Appointment> get appointments => List.unmodifiable(_appointments);
@@ -238,8 +246,8 @@ class PlannerController extends ChangeNotifier {
     if (_languageCode == code) return;
     _languageCode = code;
     notifyListeners();
-    _persistSettings();
-    _syncWidget();
+    unawaited(_persistSettings());
+    unawaited(_syncWidget());
   }
 
   void cycleLanguage() {
@@ -256,20 +264,20 @@ class PlannerController extends ChangeNotifier {
     if (_isDarkTheme == value) return;
     _isDarkTheme = value;
     notifyListeners();
-    _persistSettings();
+    unawaited(_persistSettings());
   }
 
   void setCompactCardView(bool value) {
     if (_compactCardView == value) return;
     _compactCardView = value;
     notifyListeners();
-    _persistSettings();
+    unawaited(_persistSettings());
   }
 
   void selectDate(DateTime date) {
     _selectedDate = DateTime(date.year, date.month, date.day);
     notifyListeners();
-    _syncWidget();
+    unawaited(_syncWidget());
   }
 
   void setViewMode(PlannerViewMode mode) {
@@ -341,8 +349,8 @@ class PlannerController extends ChangeNotifier {
 
     _selectedDate = baseDate;
     notifyListeners();
-    _persistAppointments();
-    _syncWidget();
+    unawaited(_persistAppointments());
+    unawaited(_syncWidget());
   }
 
   void updateAppointment(Appointment updated) {
@@ -353,8 +361,8 @@ class PlannerController extends ChangeNotifier {
     );
     _selectedDate = _appointments[index].normalizedDate;
     notifyListeners();
-    _persistAppointments();
-    _syncWidget();
+    unawaited(_persistAppointments());
+    unawaited(_syncWidget());
   }
 
   void toggleQuickStatus(String id, bool targetStatus) {
@@ -367,22 +375,24 @@ class PlannerController extends ChangeNotifier {
       clearManualStatus: nextStatus == null,
     );
     notifyListeners();
-    _persistAppointments();
-    _syncWidget();
+    unawaited(_persistAppointments());
+    unawaited(_syncWidget());
   }
 
   void deleteAppointment(String id) {
     _appointments.removeWhere((a) => a.id == id);
     notifyListeners();
-    _persistAppointments();
-    _syncWidget();
+    unawaited(_persistAppointments());
+    unawaited(_syncWidget());
   }
 
   Future<void> _syncWidget() async {
-    await WidgetSyncService.syncTodayAppointments(
-      _appointments,
-      _selectedDate,
-      lang: _languageCode,
-    );
+    try {
+      await WidgetSyncService.syncTodayAppointments(
+        _appointments,
+        _selectedDate,
+        lang: _languageCode,
+      );
+    } catch (_) {}
   }
 }
