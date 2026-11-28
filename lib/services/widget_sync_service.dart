@@ -9,8 +9,9 @@ class WidgetSyncService {
 
   static Future<void> syncTodayAppointments(
     List<Appointment> all,
-    DateTime targetDay,
-  ) async {
+    DateTime targetDay, {
+    String lang = 'ru',
+  }) async {
     await HomeWidget.setAppGroupId(iosAppGroupId);
 
     final now = DateTime.now();
@@ -18,16 +19,31 @@ class WidgetSyncService {
     final dayItems = all.where((a) => a.normalizedDate == norm).toList()
       ..sort((a, b) => a.startMinutes.compareTo(b.startMinutes));
 
+    final emptyText = lang == 'uk'
+        ? 'На обраний день записів немає'
+        : lang == 'en'
+            ? 'No appointments for this day'
+            : 'На выбранный день записей нет';
+
+    final titlePrefix = lang == 'uk'
+        ? 'Записи'
+        : lang == 'en'
+            ? 'Bookings'
+            : 'Записи';
+
     final summaryLines = dayItems.isEmpty
-        ? ['На выбранный день записей нет']
+        ? [emptyText]
         : dayItems
             .take(5)
-            .map((a) => '${a.formattedTime} — ${a.clientName} [${a.statusLabel(now)}]')
+            .map(
+              (a) =>
+                  '${a.formattedTime} — ${a.clientName} [${a.statusLabel(now, lang: lang)}]',
+            )
             .toList();
 
     await HomeWidget.saveWidgetData<String>(
       'widget_title',
-      'Записи: ${norm.day.toString().padLeft(2, '0')}.${norm.month.toString().padLeft(2, '0')}',
+      '$titlePrefix: ${norm.day.toString().padLeft(2, '0')}.${norm.month.toString().padLeft(2, '0')}',
     );
     await HomeWidget.saveWidgetData<String>(
       'widget_items_json',
