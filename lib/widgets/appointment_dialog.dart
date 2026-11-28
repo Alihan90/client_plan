@@ -28,11 +28,13 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
   late DateTime _selectedDate;
   late int _selectedHour;
   late int _selectedMinute;
+  late int _durationMinutes;
   bool _repeatUntilEndOfMonth = false;
   final Set<int> _repeatWeekdays = {};
   bool? _manualStatus;
 
   static const List<int> _minuteSteps = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+  static const List<int> _durationOptions = [30, 45, 60, 90];
 
   @override
   void initState() {
@@ -51,6 +53,11 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
     _selectedMinute = _minuteSteps.reduce(
       (a, b) => (a - rawMinute).abs() < (b - rawMinute).abs() ? a : b,
     );
+
+    _durationMinutes = ex?.durationMinutes ?? 60;
+    if (!_durationOptions.contains(_durationMinutes)) {
+      _durationMinutes = 60;
+    }
 
     _repeatWeekdays.add(_selectedDate.weekday);
     _manualStatus = ex?.isCompleted;
@@ -109,6 +116,7 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
           serviceName: _serviceCtrl.text,
           date: _selectedDate,
           startMinutes: startMinutes,
+          durationMinutes: _durationMinutes,
           isCompleted: _manualStatus,
           clearManualStatus: _manualStatus == null,
         ),
@@ -119,6 +127,7 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
         serviceName: _serviceCtrl.text,
         date: _selectedDate,
         startMinutes: startMinutes,
+        durationMinutes: _durationMinutes,
         repeatUntilEndOfMonth: _repeatUntilEndOfMonth,
         repeatWeekdays: _repeatWeekdays,
         isCompleted: _manualStatus,
@@ -267,6 +276,24 @@ class _AppointmentDialogState extends State<AppointmentDialog> {
                       onPressed: () => _setQuickTime(slot.$1, slot.$2),
                     ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                c.tr('duration_label'),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: _durationOptions.map((mins) {
+                  final selected = _durationMinutes == mins;
+                  return ChoiceChip(
+                    label: Text('$mins ${c.tr('minutes_short')}'),
+                    selected: selected,
+                    onSelected: (_) => setState(() => _durationMinutes = mins),
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 12),
               Text(
