@@ -8,13 +8,15 @@ import 'widgets/appointment_dialog.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await initializeDateFormatting('ru_RU');
-  await initializeDateFormatting('uk_UA');
-  await initializeDateFormatting('en_US');
+  try {
+    await initializeDateFormatting('ru_RU');
+    await initializeDateFormatting('uk_UA');
+    await initializeDateFormatting('en_US');
+  } catch (_) {}
 
   final controller = PlannerController();
-  await controller.initStorage();
   runApp(ClientPlannerApp(controller: controller));
+  controller.initStorage();
 }
 
 class _ThemeTokens {
