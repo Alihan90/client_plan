@@ -9,6 +9,8 @@ class PlannerController extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
   PlannerViewMode _viewMode = PlannerViewMode.day;
   String _languageCode = 'ru';
+  bool _isDarkTheme = false;
+  bool _compactCardView = false;
 
   PlannerController() {
     _selectedDate = DateTime(
@@ -26,6 +28,10 @@ class PlannerController extends ChangeNotifier {
   PlannerViewMode get viewMode => _viewMode;
 
   String get languageCode => _languageCode;
+
+  bool get isDarkTheme => _isDarkTheme;
+
+  bool get compactCardView => _compactCardView;
 
   Locale get locale {
     switch (_languageCode) {
@@ -53,9 +59,11 @@ class PlannerController extends ChangeNotifier {
         'client_hint': 'Введите имя клиента',
         'client_error': 'Укажите имя клиента',
         'service_label': 'Услуга',
-        'service_hint': 'Например: Консультация',
+        'service_hint': 'Например: ЛФК / Массаж',
         'date_label': 'Дата',
         'time_label': 'Время (24ч)',
+        'duration_label': 'Длительность',
+        'minutes_short': 'мин',
         'hour': 'Час',
         'minute': 'Мин',
         'repeat_until_end': 'Повторять до конца месяца',
@@ -68,6 +76,12 @@ class PlannerController extends ChangeNotifier {
         'cancel': 'Отмена',
         'save': 'Сохранить',
         'create': 'Создать',
+        'settings': 'Настройки',
+        'dark_theme': 'Тёмная тема',
+        'dark_theme_sub': 'Комфортный тёмный режим интерфейса',
+        'compact_cards': 'Компактный вид записей',
+        'compact_cards_sub': 'Компактный — плотный список, полный — с длительностью и услугой',
+        'close': 'Готово',
         'mon': 'Пн',
         'tue': 'Вт',
         'wed': 'Ср',
@@ -89,9 +103,11 @@ class PlannerController extends ChangeNotifier {
         'client_hint': "Введіть ім'я клієнта",
         'client_error': "Вкажіть ім'я клієнта",
         'service_label': 'Послуга',
-        'service_hint': 'Наприклад: Консультація',
+        'service_hint': 'Наприклад: ЛФК / Масаж',
         'date_label': 'Дата',
         'time_label': 'Час (24г)',
+        'duration_label': 'Тривалість',
+        'minutes_short': 'хв',
         'hour': 'Год',
         'minute': 'Хв',
         'repeat_until_end': 'Повторювати до кінця місяця',
@@ -104,6 +120,12 @@ class PlannerController extends ChangeNotifier {
         'cancel': 'Скасувати',
         'save': 'Зберегти',
         'create': 'Створити',
+        'settings': 'Налаштування',
+        'dark_theme': 'Темна тема',
+        'dark_theme_sub': 'Комфортний темний режим інтерфейсу',
+        'compact_cards': 'Компактний вигляд записів',
+        'compact_cards_sub': 'Компактний — щільний список, повний — із тривалістю та послугою',
+        'close': 'Готово',
         'mon': 'Пн',
         'tue': 'Вт',
         'wed': 'Ср',
@@ -125,9 +147,11 @@ class PlannerController extends ChangeNotifier {
         'client_hint': 'Enter client name',
         'client_error': 'Please enter client name',
         'service_label': 'Service',
-        'service_hint': 'e.g. Consultation',
+        'service_hint': 'e.g. Physio / Massage',
         'date_label': 'Date',
         'time_label': 'Time (24h)',
+        'duration_label': 'Duration',
+        'minutes_short': 'min',
         'hour': 'Hour',
         'minute': 'Min',
         'repeat_until_end': 'Repeat until end of month',
@@ -140,6 +164,12 @@ class PlannerController extends ChangeNotifier {
         'cancel': 'Cancel',
         'save': 'Save',
         'create': 'Create',
+        'settings': 'Settings',
+        'dark_theme': 'Dark theme',
+        'dark_theme_sub': 'Low-glare dark interface mode',
+        'compact_cards': 'Compact appointment cards',
+        'compact_cards_sub': 'Compact — dense list, Full — with duration and service',
+        'close': 'Done',
         'mon': 'Mon',
         'tue': 'Tue',
         'wed': 'Wed',
@@ -167,6 +197,18 @@ class PlannerController extends ChangeNotifier {
     } else {
       setLanguage('ru');
     }
+  }
+
+  void setDarkTheme(bool value) {
+    if (_isDarkTheme == value) return;
+    _isDarkTheme = value;
+    notifyListeners();
+  }
+
+  void setCompactCardView(bool value) {
+    if (_compactCardView == value) return;
+    _compactCardView = value;
+    notifyListeners();
   }
 
   void selectDate(DateTime date) {
