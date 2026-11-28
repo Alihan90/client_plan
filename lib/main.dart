@@ -16,6 +16,34 @@ Future<void> main() async {
   runApp(ClientPlannerApp(controller: controller));
 }
 
+class _AppPalette {
+  static const canvas = Color(0xFFF3F5F4);
+  static const surface = Color(0xFFFFFFFF);
+  static const surfaceSubtle = Color(0xFFF8FAFC);
+  static const inkPrimary = Color(0xFF101828);
+  static const inkSecondary = Color(0xFF667085);
+  static const inkMuted = Color(0xFF98A2B3);
+  static const hairline = Color(0xFFE4E7EC);
+
+  static const primary = Color(0xFF0D5C54);
+  static const primarySoft = Color(0xFFE6F4F1);
+
+  static const pendingBg = Color(0xFFF2F4F7);
+  static const pendingBorder = Color(0xFFD0D5DD);
+  static const pendingPill = Color(0xFFE4E7EC);
+  static const pendingText = Color(0xFF344054);
+
+  static const doneBg = Color(0xFFECFDF3);
+  static const doneBorder = Color(0xFFA6F4C5);
+  static const donePill = Color(0xFFD1FADF);
+  static const doneText = Color(0xFF027A48);
+
+  static const missedBg = Color(0xFFFEF3F2);
+  static const missedBorder = Color(0xFFFECDCA);
+  static const missedPill = Color(0xFFFEE4E2);
+  static const missedText = Color(0xFFB42318);
+}
+
 class ClientPlannerApp extends StatelessWidget {
   final PlannerController controller;
 
@@ -26,6 +54,13 @@ class ClientPlannerApp extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
+        final scheme = ColorScheme.fromSeed(
+          seedColor: _AppPalette.primary,
+          primary: _AppPalette.primary,
+          surface: _AppPalette.surface,
+          brightness: Brightness.light,
+        );
+
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           locale: controller.locale,
@@ -42,10 +77,42 @@ class ClientPlannerApp extends StatelessWidget {
           title: controller.tr('app_title'),
           theme: ThemeData(
             useMaterial3: true,
-            scaffoldBackgroundColor: const Color(0xFFF5F7F8),
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF0F766E),
-              brightness: Brightness.light,
+            colorScheme: scheme,
+            scaffoldBackgroundColor: _AppPalette.canvas,
+            fontFamilyFallback: const ['Inter', 'SF Pro Text', 'Roboto', 'sans-serif'],
+            appBarTheme: const AppBarTheme(
+              backgroundColor: _AppPalette.surface,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0.5,
+              foregroundColor: _AppPalette.inkPrimary,
+            ),
+            segmentedButtonTheme: SegmentedButtonThemeData(
+              showSelectedIcon: false,
+              style: ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                shape: MaterialStatePropertyAll(
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                side: const MaterialStatePropertyAll(
+                  BorderSide(color: _AppPalette.hairline),
+                ),
+                backgroundColor: MaterialStateProperty.resolveWith((states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return _AppPalette.primary;
+                  }
+                  return _AppPalette.surfaceSubtle;
+                }),
+                foregroundColor: MaterialStateProperty.resolveWith((states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return Colors.white;
+                  }
+                  return _AppPalette.inkSecondary;
+                }),
+                textStyle: const MaterialStatePropertyAll(
+                  TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+              ),
             ),
           ),
           home: PlannerHomePage(controller: controller),
@@ -92,15 +159,17 @@ class PlannerHomePage extends StatelessWidget {
       builder: (context, _) {
         final now = DateTime.now();
         final locStr = controller.locale.toString();
-        final headerDate = DateFormat('d MMMM yyyy', locStr).format(controller.selectedDate);
+        final rawHeaderDate = DateFormat('d MMMM yyyy', locStr).format(controller.selectedDate);
+        final headerDate = rawHeaderDate.isEmpty
+            ? rawHeaderDate
+            : '${rawHeaderDate[0].toUpperCase()}${rawHeaderDate.substring(1)}';
 
         return Scaffold(
           appBar: AppBar(
-            backgroundColor: Colors.white,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
+            titleSpacing: 4,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+              icon: const Icon(Icons.chevron_left_rounded, size: 26),
+              tooltip: '-1',
               onPressed: () => controller.stepPeriod(-1),
             ),
             title: Column(
@@ -108,13 +177,18 @@ class PlannerHomePage extends StatelessWidget {
               children: [
                 Text(
                   controller.tr('app_title'),
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    letterSpacing: -0.3,
+                    color: _AppPalette.inkPrimary,
+                  ),
                 ),
                 Text(
                   headerDate,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF64748B),
+                    color: _AppPalette.inkSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -122,21 +196,31 @@ class PlannerHomePage extends StatelessWidget {
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                icon: const Icon(Icons.chevron_right_rounded, size: 26),
+                tooltip: '+1',
                 onPressed: () => controller.stepPeriod(1),
               ),
-              Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  onPressed: controller.cycleLanguage,
-                  child: Text(
-                    controller.languageCode.toUpperCase(),
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+              Container(
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  color: _AppPalette.surfaceSubtle,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _AppPalette.hairline),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: controller.cycleLanguage,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                    child: Text(
+                      controller.languageCode.toUpperCase(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        letterSpacing: 0.5,
+                        color: _AppPalette.inkPrimary,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -144,12 +228,19 @@ class PlannerHomePage extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 12),
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
+                    backgroundColor: _AppPalette.primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
                     visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () => _openCreateDialog(context, controller.selectedDate),
                   icon: const Icon(Icons.add_rounded, size: 18),
-                  label: Text(controller.tr('book')),
+                  label: Text(
+                    controller.tr('book'),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
                 ),
               ),
             ],
@@ -157,31 +248,40 @@ class PlannerHomePage extends StatelessWidget {
           body: Column(
             children: [
               Container(
-                color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: _AppPalette.surface,
+                  border: Border(
+                    bottom: BorderSide(color: _AppPalette.hairline),
+                  ),
+                ),
+                padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
                 child: Column(
                   children: [
-                    SegmentedButton<PlannerViewMode>(
-                      segments: [
-                        ButtonSegment<PlannerViewMode>(
-                          value: PlannerViewMode.day,
-                          label: Text(controller.tr('day')),
-                        ),
-                        ButtonSegment<PlannerViewMode>(
-                          value: PlannerViewMode.week,
-                          label: Text(controller.tr('week')),
-                        ),
-                        ButtonSegment<PlannerViewMode>(
-                          value: PlannerViewMode.month,
-                          label: Text(controller.tr('month')),
-                        ),
-                      ],
-                      selected: <PlannerViewMode>{controller.viewMode},
-                      onSelectionChanged: (Set<PlannerViewMode> set) {
-                        if (set.isNotEmpty) {
-                          controller.setViewMode(set.first);
-                        }
-                      },
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<PlannerViewMode>(
+                        segments: [
+                          ButtonSegment<PlannerViewMode>(
+                            value: PlannerViewMode.day,
+                            label: Text(controller.tr('day')),
+                          ),
+                          ButtonSegment<PlannerViewMode>(
+                            value: PlannerViewMode.week,
+                            label: Text(controller.tr('week')),
+                          ),
+                          ButtonSegment<PlannerViewMode>(
+                            value: PlannerViewMode.month,
+                            label: Text(controller.tr('month')),
+                          ),
+                        ],
+                        selected: <PlannerViewMode>{controller.viewMode},
+                        onSelectionChanged: (Set<PlannerViewMode> set) {
+                          if (set.isNotEmpty) {
+                            controller.setViewMode(set.first);
+                          }
+                        },
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _WeekdayHeader(controller: controller),
@@ -246,7 +346,8 @@ class _WeekdayHeader extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
+                    letterSpacing: 0.2,
+                    color: _AppPalette.inkMuted,
                   ),
                 ),
               ),
@@ -275,27 +376,60 @@ class _DayView extends StatelessWidget {
     final items = controller.appointmentsForDay(controller.selectedDate);
     if (items.isEmpty) {
       return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.event_available_rounded, size: 44, color: Color(0xFF94A3B8)),
-            const SizedBox(height: 10),
-            Text(
-              controller.tr('no_appointments'),
-              style: const TextStyle(color: Color(0xFF64748B), fontSize: 15),
-            ),
-            const SizedBox(height: 14),
-            FilledButton.tonal(
-              onPressed: onAdd,
-              child: Text(controller.tr('book')),
-            ),
-          ],
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          decoration: BoxDecoration(
+            color: _AppPalette.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _AppPalette.hairline),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  color: _AppPalette.primarySoft,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.event_available_rounded,
+                  size: 24,
+                  color: _AppPalette.primary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                controller.tr('no_appointments'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: _AppPalette.inkSecondary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: _AppPalette.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: onAdd,
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: Text(controller.tr('book')),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
@@ -303,28 +437,28 @@ class _DayView extends StatelessWidget {
         final isDone = item.isCompleted == true;
         final isMissed = item.isCompleted == false;
 
-        Color rowBg = const Color(0xFFF1F5F9);
-        Color borderColor = const Color(0xFFCBD5E1);
-        Color timeBadgeBg = const Color(0xFFE2E8F0);
-        Color timeTextColor = const Color(0xFF334155);
+        Color rowBg = _AppPalette.pendingBg;
+        Color borderColor = _AppPalette.pendingBorder;
+        Color timeBadgeBg = _AppPalette.pendingPill;
+        Color timeTextColor = _AppPalette.pendingText;
 
         if (isDone) {
-          rowBg = const Color(0xFFECFDF5);
-          borderColor = const Color(0xFF86EFAC);
-          timeBadgeBg = const Color(0xFFD1FAE5);
-          timeTextColor = const Color(0xFF15803D);
+          rowBg = _AppPalette.doneBg;
+          borderColor = _AppPalette.doneBorder;
+          timeBadgeBg = _AppPalette.donePill;
+          timeTextColor = _AppPalette.doneText;
         } else if (isMissed) {
-          rowBg = const Color(0xFFFEF2F2);
-          borderColor = const Color(0xFFFCA5A5);
-          timeBadgeBg = const Color(0xFFFEE2E2);
-          timeTextColor = const Color(0xFFB91C1C);
+          rowBg = _AppPalette.missedBg;
+          borderColor = _AppPalette.missedBorder;
+          timeBadgeBg = _AppPalette.missedPill;
+          timeTextColor = _AppPalette.missedText;
         }
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           decoration: BoxDecoration(
             color: rowBg,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: borderColor),
           ),
           child: Row(
@@ -333,18 +467,19 @@ class _DayView extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: BoxDecoration(
                   color: timeBadgeBg,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(11),
                 ),
                 child: Text(
                   item.formattedTime,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
+                    fontFeatures: const [FontFeature.tabularFigures()],
                     color: timeTextColor,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 11),
               Expanded(
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -354,19 +489,24 @@ class _DayView extends StatelessWidget {
                     children: [
                       Text(
                         item.clientName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
-                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.2,
+                          color: _AppPalette.inkPrimary,
                         ),
                       ),
                       if (item.serviceName.isNotEmpty) ...[
                         const SizedBox(height: 2),
                         Text(
                           item.serviceName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF64748B),
+                            color: _AppPalette.inkSecondary,
                           ),
                         ),
                       ],
@@ -376,29 +516,29 @@ class _DayView extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               _RowActionButton(
-                icon: Icons.edit_rounded,
+                icon: Icons.edit_outlined,
                 active: false,
-                activeColor: const Color(0xFF0F766E),
-                activeBg: const Color(0xFFE6FFFA),
-                iconColor: const Color(0xFF475569),
+                activeColor: _AppPalette.primary,
+                activeBg: _AppPalette.primarySoft,
+                iconColor: _AppPalette.inkSecondary,
                 onTap: () => onEdit(item),
               ),
               const SizedBox(width: 6),
               _RowActionButton(
                 icon: Icons.check_rounded,
                 active: isDone,
-                activeColor: const Color(0xFF16A34A),
-                activeBg: const Color(0xFFDCFCE7),
-                iconColor: isDone ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                activeColor: _AppPalette.doneText,
+                activeBg: _AppPalette.donePill,
+                iconColor: isDone ? _AppPalette.doneText : _AppPalette.inkSecondary,
                 onTap: () => controller.toggleQuickStatus(item.id, true),
               ),
               const SizedBox(width: 6),
               _RowActionButton(
                 icon: Icons.close_rounded,
                 active: isMissed,
-                activeColor: const Color(0xFFDC2626),
-                activeBg: const Color(0xFFFEE2E2),
-                iconColor: isMissed ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                activeColor: _AppPalette.missedText,
+                activeBg: _AppPalette.missedPill,
+                iconColor: isMissed ? _AppPalette.missedText : _AppPalette.inkSecondary,
                 onTap: () => controller.toggleQuickStatus(item.id, false),
               ),
             ],
@@ -435,11 +575,11 @@ class _RowActionButton extends StatelessWidget {
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: active ? activeBg : Colors.white.withOpacity(0.85),
-          borderRadius: BorderRadius.circular(10),
+          color: active ? activeBg : _AppPalette.surface.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(11),
           border: Border.all(
-            color: active ? activeColor : const Color(0xFFCBD5E1),
-            width: active ? 1.5 : 1,
+            color: active ? activeColor : _AppPalette.pendingBorder,
+            width: active ? 1.4 : 1,
           ),
         ),
         child: Icon(
@@ -468,51 +608,119 @@ class _WeekView extends StatelessWidget {
     final sel = controller.selectedDate;
     final monday = sel.subtract(Duration(days: sel.weekday - 1));
     final days = List.generate(7, (i) => monday.add(Duration(days: i)));
+    final locStr = controller.locale.toString();
 
     return ListView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
       itemCount: days.length,
       itemBuilder: (context, index) {
         final day = days[index];
         final items = controller.appointmentsForDay(day);
         final isSelected = day == sel;
+        final rawDayTitle = DateFormat('EEEE, d MMM', locStr).format(day);
+        final dayTitle = rawDayTitle.isEmpty
+            ? rawDayTitle
+            : '${rawDayTitle[0].toUpperCase()}${rawDayTitle.substring(1)}';
 
-        return Card(
+        return Container(
           margin: const EdgeInsets.only(bottom: 10),
-          elevation: 0,
-          color: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: BorderSide(
-              color: isSelected ? const Color(0xFF0F766E) : const Color(0xFFE2E8F0),
+          decoration: BoxDecoration(
+            color: _AppPalette.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected ? _AppPalette.primary : _AppPalette.hairline,
               width: isSelected ? 1.5 : 1,
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 InkWell(
+                  borderRadius: BorderRadius.circular(8),
                   onTap: () => controller.selectDate(day),
-                  child: Text(
-                    DateFormat('EEEE, d MMM', controller.locale.toString()).format(day),
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        dayTitle,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: isSelected ? _AppPalette.primary : _AppPalette.inkPrimary,
+                        ),
+                      ),
+                      if (items.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _AppPalette.primarySoft,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Text(
+                            '${items.length}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _AppPalette.primary,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 if (items.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   for (final item in items)
-                    ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('${item.formattedTime} — ${item.clientName}'),
-                      subtitle: item.serviceName.isNotEmpty ? Text(item.serviceName) : null,
-                      trailing: Text(
-                        item.statusLabel(now, lang: controller.languageCode),
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => onEdit(item),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _AppPalette.surfaceSubtle,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: _AppPalette.hairline),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                item.formattedTime,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 13,
+                                  color: _AppPalette.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  item.clientName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                    color: _AppPalette.inkPrimary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                item.statusLabel(now, lang: controller.languageCode),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: _AppPalette.inkSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      onTap: () => onEdit(item),
                     ),
                 ],
               ],
@@ -542,11 +750,19 @@ class _MonthView extends StatelessWidget {
     final leadingEmpty = firstDay.weekday - 1;
     final totalCells = leadingEmpty + daysInMonth;
 
+    final rawMonthTitle = DateFormat('MMMM yyyy', locStr).format(firstDay);
+    final monthTitle = rawMonthTitle.isEmpty
+        ? rawMonthTitle
+        : '${rawMonthTitle[0].toUpperCase()}${rawMonthTitle.substring(1)}';
+
     return Column(
       children: [
         Container(
-          color: Colors.white,
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+          decoration: const BoxDecoration(
+            color: _AppPalette.surface,
+            border: Border(bottom: BorderSide(color: _AppPalette.hairline)),
+          ),
+          padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
           child: Column(
             children: [
               Row(
@@ -561,8 +777,12 @@ class _MonthView extends StatelessWidget {
                     },
                   ),
                   Text(
-                    DateFormat('MMMM yyyy', locStr).format(firstDay),
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    monthTitle,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: _AppPalette.inkPrimary,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.chevron_right_rounded),
@@ -578,22 +798,41 @@ class _MonthView extends StatelessWidget {
                 height: 36,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   itemCount: 12,
                   separatorBuilder: (_, __) => const SizedBox(width: 6),
                   itemBuilder: (context, mIndex) {
                     final monthNum = mIndex + 1;
                     final mDate = DateTime(sel.year, monthNum, 1);
                     final isCurrentMonth = monthNum == sel.month;
-                    final shortMonth = DateFormat('MMM', locStr).format(mDate);
+                    final rawShort = DateFormat('MMM', locStr).format(mDate);
+                    final shortMonth = rawShort.replaceAll('.', '');
 
-                    return ChoiceChip(
-                      label: Text(shortMonth),
-                      selected: isCurrentMonth,
-                      onSelected: (_) {
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () {
                         final maxDay = DateTime(sel.year, monthNum + 1, 0).day;
                         onSelectDay(DateTime(sel.year, monthNum, sel.day.clamp(1, maxDay)));
                       },
+                      child: Container(
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: isCurrentMonth ? _AppPalette.primary : _AppPalette.surfaceSubtle,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isCurrentMonth ? _AppPalette.primary : _AppPalette.hairline,
+                          ),
+                        ),
+                        child: Text(
+                          shortMonth,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isCurrentMonth ? Colors.white : _AppPalette.inkSecondary,
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),
@@ -603,11 +842,11 @@ class _MonthView extends StatelessWidget {
         ),
         Expanded(
           child: GridView.builder(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
+              mainAxisSpacing: 8,
+              crossAxisSpacing: 8,
             ),
             itemCount: totalCells,
             itemBuilder: (context, index) {
@@ -620,17 +859,17 @@ class _MonthView extends StatelessWidget {
               final count = controller.appointmentsForDay(date).length;
 
               return InkWell(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 onTap: () {
                   onSelectDay(date);
                   controller.setViewMode(PlannerViewMode.day);
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF0F766E) : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    color: isSelected ? _AppPalette.primary : _AppPalette.surface,
+                    borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF0F766E) : const Color(0xFFE2E8F0),
+                      color: isSelected ? _AppPalette.primary : _AppPalette.hairline,
                     ),
                   ),
                   child: Column(
@@ -640,18 +879,30 @@ class _MonthView extends StatelessWidget {
                         '$dayNum',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: isSelected ? Colors.white : const Color(0xFF0F172A),
+                          fontSize: 14,
+                          color: isSelected ? Colors.white : _AppPalette.inkPrimary,
                         ),
                       ),
-                      if (count > 0)
-                        Text(
-                          '$count',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.white70 : const Color(0xFF0F766E),
+                      if (count > 0) ...[
+                        const SizedBox(height: 2),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.white.withOpacity(0.22)
+                                : _AppPalette.primarySoft,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Text(
+                            '$count',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected ? Colors.white : _AppPalette.primary,
+                            ),
                           ),
                         ),
+                      ],
                     ],
                   ),
                 ),
