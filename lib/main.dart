@@ -163,21 +163,21 @@ class PlannerHomePage extends StatelessWidget {
                   children: [
                     SegmentedButton<PlannerViewMode>(
                       segments: [
-                        ButtonSegment(
+                        ButtonSegment<PlannerViewMode>(
                           value: PlannerViewMode.day,
                           label: Text(controller.tr('day')),
                         ),
-                        ButtonSegment(
+                        ButtonSegment<PlannerViewMode>(
                           value: PlannerViewMode.week,
                           label: Text(controller.tr('week')),
                         ),
-                        ButtonSegment(
+                        ButtonSegment<PlannerViewMode>(
                           value: PlannerViewMode.month,
                           label: Text(controller.tr('month')),
                         ),
                       ],
-                      selected: {controller.viewMode},
-                      onSelectionChanged: (set) {
+                      selected: <PlannerViewMode>{controller.viewMode},
+                      onSelectionChanged: (Set<PlannerViewMode> set) {
                         if (set.isNotEmpty) {
                           controller.setViewMode(set.first);
                         }
@@ -435,7 +435,7 @@ class _RowActionButton extends StatelessWidget {
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: active ? activeBg : Colors.white.withValues(alpha: 0.85),
+          color: active ? activeBg : Colors.white.withOpacity(0.85),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: active ? activeColor : const Color(0xFFCBD5E1),
