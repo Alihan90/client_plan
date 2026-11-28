@@ -16,32 +16,111 @@ Future<void> main() async {
   runApp(ClientPlannerApp(controller: controller));
 }
 
-class _AppPalette {
-  static const canvas = Color(0xFFF3F5F4);
-  static const surface = Color(0xFFFFFFFF);
-  static const surfaceSubtle = Color(0xFFF8FAFC);
-  static const inkPrimary = Color(0xFF101828);
-  static const inkSecondary = Color(0xFF667085);
-  static const inkMuted = Color(0xFF98A2B3);
-  static const hairline = Color(0xFFE4E7EC);
+class _ThemeTokens {
+  final bool isDark;
+  final Color canvas;
+  final Color surface;
+  final Color surfaceSubtle;
+  final Color inkPrimary;
+  final Color inkSecondary;
+  final Color inkMuted;
+  final Color hairline;
+  final Color primary;
+  final Color primarySoft;
 
-  static const primary = Color(0xFF0D5C54);
-  static const primarySoft = Color(0xFFE6F4F1);
+  final Color pendingBg;
+  final Color pendingBorder;
+  final Color pendingPill;
+  final Color pendingText;
 
-  static const pendingBg = Color(0xFFF2F4F7);
-  static const pendingBorder = Color(0xFFD0D5DD);
-  static const pendingPill = Color(0xFFE4E7EC);
-  static const pendingText = Color(0xFF344054);
+  final Color doneBg;
+  final Color doneBorder;
+  final Color donePill;
+  final Color doneText;
 
-  static const doneBg = Color(0xFFECFDF3);
-  static const doneBorder = Color(0xFFA6F4C5);
-  static const donePill = Color(0xFFD1FADF);
-  static const doneText = Color(0xFF027A48);
+  final Color missedBg;
+  final Color missedBorder;
+  final Color missedPill;
+  final Color missedText;
 
-  static const missedBg = Color(0xFFFEF3F2);
-  static const missedBorder = Color(0xFFFECDCA);
-  static const missedPill = Color(0xFFFEE4E2);
-  static const missedText = Color(0xFFB42318);
+  const _ThemeTokens._({
+    required this.isDark,
+    required this.canvas,
+    required this.surface,
+    required this.surfaceSubtle,
+    required this.inkPrimary,
+    required this.inkSecondary,
+    required this.inkMuted,
+    required this.hairline,
+    required this.primary,
+    required this.primarySoft,
+    required this.pendingBg,
+    required this.pendingBorder,
+    required this.pendingPill,
+    required this.pendingText,
+    required this.doneBg,
+    required this.doneBorder,
+    required this.donePill,
+    required this.doneText,
+    required this.missedBg,
+    required this.missedBorder,
+    required this.missedPill,
+    required this.missedText,
+  });
+
+  factory _ThemeTokens.fromDark(bool isDark) {
+    if (isDark) {
+      return const _ThemeTokens._(
+        isDark: true,
+        canvas: Color(0xFF0B0F14),
+        surface: Color(0xFF121821),
+        surfaceSubtle: Color(0xFF18202C),
+        inkPrimary: Color(0xFFF3F4F6),
+        inkSecondary: Color(0xFF9CA3AF),
+        inkMuted: Color(0xFF6B7280),
+        hairline: Color(0xFF242E3D),
+        primary: Color(0xFF14B8A6),
+        primarySoft: Color(0xFF132E2C),
+        pendingBg: Color(0xFF161E29),
+        pendingBorder: Color(0xFF2A3546),
+        pendingPill: Color(0xFF222C3B),
+        pendingText: Color(0xFFD1D5DB),
+        doneBg: Color(0xFF0E261D),
+        doneBorder: Color(0xFF1E563F),
+        donePill: Color(0xFF153B2C),
+        doneText: Color(0xFF4ADE80),
+        missedBg: Color(0xFF291316),
+        missedBorder: Color(0xFF5C232A),
+        missedPill: Color(0xFF3E191E),
+        missedText: Color(0xFFF87171),
+      );
+    }
+
+    return const _ThemeTokens._(
+      isDark: false,
+      canvas: Color(0xFFF3F5F4),
+      surface: Color(0xFFFFFFFF),
+      surfaceSubtle: Color(0xFFF8FAFC),
+      inkPrimary: Color(0xFF101828),
+      inkSecondary: Color(0xFF667085),
+      inkMuted: Color(0xFF98A2B3),
+      hairline: Color(0xFFE4E7EC),
+      primary: Color(0xFF0D5C54),
+      primarySoft: Color(0xFFE6F4F1),
+      pendingBg: Color(0xFFF2F4F7),
+      pendingBorder: Color(0xFFD0D5DD),
+      pendingPill: Color(0xFFE4E7EC),
+      pendingText: Color(0xFF344054),
+      doneBg: Color(0xFFECFDF3),
+      doneBorder: Color(0xFFA6F4C5),
+      donePill: Color(0xFFD1FADF),
+      doneText: Color(0xFF027A48),
+      missedBg: Color(0xFFFEF3F2),
+      missedBorder: Color(0xFFFECDCA),
+      missedPill: Color(0xFFFEE4E2),
+      missedText: Color(0xFFB42318),
+    );
+  }
 }
 
 class ClientPlannerApp extends StatelessWidget {
@@ -54,11 +133,12 @@ class ClientPlannerApp extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
+        final tokens = _ThemeTokens.fromDark(controller.isDarkTheme);
         final scheme = ColorScheme.fromSeed(
-          seedColor: _AppPalette.primary,
-          primary: _AppPalette.primary,
-          surface: _AppPalette.surface,
-          brightness: Brightness.light,
+          seedColor: tokens.primary,
+          primary: tokens.primary,
+          surface: tokens.surface,
+          brightness: tokens.isDark ? Brightness.dark : Brightness.light,
         );
 
         return MaterialApp(
@@ -78,38 +158,38 @@ class ClientPlannerApp extends StatelessWidget {
           theme: ThemeData(
             useMaterial3: true,
             colorScheme: scheme,
-            scaffoldBackgroundColor: _AppPalette.canvas,
+            scaffoldBackgroundColor: tokens.canvas,
             fontFamilyFallback: const ['Inter', 'SF Pro Text', 'Roboto', 'sans-serif'],
-            appBarTheme: const AppBarTheme(
-              backgroundColor: _AppPalette.surface,
+            appBarTheme: AppBarTheme(
+              backgroundColor: tokens.surface,
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               scrolledUnderElevation: 0.5,
-              foregroundColor: _AppPalette.inkPrimary,
+              foregroundColor: tokens.inkPrimary,
             ),
             segmentedButtonTheme: SegmentedButtonThemeData(
               showSelectedIcon: false,
               style: ButtonStyle(
                 visualDensity: VisualDensity.compact,
-                shape: MaterialStatePropertyAll(
+                shape: WidgetStatePropertyAll(
                   RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                side: const MaterialStatePropertyAll(
-                  BorderSide(color: _AppPalette.hairline),
+                side: WidgetStatePropertyAll(
+                  BorderSide(color: tokens.hairline),
                 ),
-                backgroundColor: MaterialStateProperty.resolveWith((states) {
-                  if (states.contains(MaterialState.selected)) {
-                    return _AppPalette.primary;
+                backgroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return tokens.primary;
                   }
-                  return _AppPalette.surfaceSubtle;
+                  return tokens.surfaceSubtle;
                 }),
-                foregroundColor: MaterialStateProperty.resolveWith((states) {
-                  if (states.contains(MaterialState.selected)) {
+                foregroundColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
                     return Colors.white;
                   }
-                  return _AppPalette.inkSecondary;
+                  return tokens.inkSecondary;
                 }),
-                textStyle: const MaterialStatePropertyAll(
+                textStyle: const WidgetStatePropertyAll(
                   TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                 ),
               ),
@@ -152,11 +232,105 @@ class PlannerHomePage extends StatelessWidget {
     );
   }
 
+  Future<void> _openSettingsSheet(BuildContext context, _ThemeTokens tokens) async {
+    FocusScope.of(context).unfocus();
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: tokens.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetCtx) {
+        return AnimatedBuilder(
+          animation: controller,
+          builder: (_, __) {
+            final t = _ThemeTokens.fromDark(controller.isDarkTheme);
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: t.hairline,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      controller.tr('settings'),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: t.inkPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        controller.tr('dark_theme'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: t.inkPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        controller.tr('dark_theme_sub'),
+                        style: TextStyle(fontSize: 12, color: t.inkSecondary),
+                      ),
+                      value: controller.isDarkTheme,
+                      onChanged: controller.setDarkTheme,
+                    ),
+                    Divider(color: t.hairline),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        controller.tr('compact_cards'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: t.inkPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        controller.tr('compact_cards_sub'),
+                        style: TextStyle(fontSize: 12, color: t.inkSecondary),
+                      ),
+                      value: controller.compactCardView,
+                      onChanged: controller.setCompactCardView,
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: t.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () => Navigator.of(sheetCtx).pop(),
+                      child: Text(controller.tr('close')),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
+        final tokens = _ThemeTokens.fromDark(controller.isDarkTheme);
         final now = DateTime.now();
         final locStr = controller.locale.toString();
         final rawHeaderDate = DateFormat('d MMMM yyyy', locStr).format(controller.selectedDate);
@@ -169,7 +343,6 @@ class PlannerHomePage extends StatelessWidget {
             titleSpacing: 4,
             leading: IconButton(
               icon: const Icon(Icons.chevron_left_rounded, size: 26),
-              tooltip: '-1',
               onPressed: () => controller.stepPeriod(-1),
             ),
             title: Column(
@@ -177,18 +350,18 @@ class PlannerHomePage extends StatelessWidget {
               children: [
                 Text(
                   controller.tr('app_title'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
                     letterSpacing: -0.3,
-                    color: _AppPalette.inkPrimary,
+                    color: tokens.inkPrimary,
                   ),
                 ),
                 Text(
                   headerDate,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: _AppPalette.inkSecondary,
+                    color: tokens.inkSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -197,42 +370,46 @@ class PlannerHomePage extends StatelessWidget {
             actions: [
               IconButton(
                 icon: const Icon(Icons.chevron_right_rounded, size: 26),
-                tooltip: '+1',
                 onPressed: () => controller.stepPeriod(1),
               ),
               Container(
-                margin: const EdgeInsets.only(right: 6),
+                margin: const EdgeInsets.only(right: 4),
                 decoration: BoxDecoration(
-                  color: _AppPalette.surfaceSubtle,
+                  color: tokens.surfaceSubtle,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: _AppPalette.hairline),
+                  border: Border.all(color: tokens.hairline),
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
                   onTap: controller.cycleLanguage,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     child: Text(
                       controller.languageCode.toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 11,
                         letterSpacing: 0.5,
-                        color: _AppPalette.inkPrimary,
+                        color: tokens.inkPrimary,
                       ),
                     ),
                   ),
                 ),
               ),
+              IconButton(
+                icon: Icon(Icons.settings_outlined, size: 21, color: tokens.inkSecondary),
+                tooltip: controller.tr('settings'),
+                onPressed: () => _openSettingsSheet(context, tokens),
+              ),
               Padding(
-                padding: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.only(right: 10),
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
-                    backgroundColor: _AppPalette.primary,
+                    backgroundColor: tokens.primary,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: () => _openCreateDialog(context, controller.selectedDate),
@@ -249,11 +426,9 @@ class PlannerHomePage extends StatelessWidget {
             children: [
               Container(
                 width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: _AppPalette.surface,
-                  border: Border(
-                    bottom: BorderSide(color: _AppPalette.hairline),
-                  ),
+                decoration: BoxDecoration(
+                  color: tokens.surface,
+                  border: Border(bottom: BorderSide(color: tokens.hairline)),
                 ),
                 padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
                 child: Column(
@@ -284,11 +459,11 @@ class PlannerHomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _WeekdayHeader(controller: controller),
+                    _WeekdayHeader(controller: controller, tokens: tokens),
                   ],
                 ),
               ),
-              Expanded(child: _buildBody(context, now)),
+              Expanded(child: _buildBody(context, now, tokens)),
             ],
           ),
         );
@@ -296,11 +471,12 @@ class PlannerHomePage extends StatelessWidget {
     );
   }
 
-  Widget _buildBody(BuildContext context, DateTime now) {
+  Widget _buildBody(BuildContext context, DateTime now, _ThemeTokens tokens) {
     switch (controller.viewMode) {
       case PlannerViewMode.day:
         return _DayView(
           controller: controller,
+          tokens: tokens,
           now: now,
           onEdit: (item) => _openEditDialog(context, item),
           onAdd: () => _openCreateDialog(context, controller.selectedDate),
@@ -308,12 +484,14 @@ class PlannerHomePage extends StatelessWidget {
       case PlannerViewMode.week:
         return _WeekView(
           controller: controller,
+          tokens: tokens,
           now: now,
           onEdit: (item) => _openEditDialog(context, item),
         );
       case PlannerViewMode.month:
         return _MonthView(
           controller: controller,
+          tokens: tokens,
           onSelectDay: (d) => controller.selectDate(d),
         );
     }
@@ -322,8 +500,9 @@ class PlannerHomePage extends StatelessWidget {
 
 class _WeekdayHeader extends StatelessWidget {
   final PlannerController controller;
+  final _ThemeTokens tokens;
 
-  const _WeekdayHeader({required this.controller});
+  const _WeekdayHeader({required this.controller, required this.tokens});
 
   @override
   Widget build(BuildContext context) {
@@ -343,11 +522,11 @@ class _WeekdayHeader extends StatelessWidget {
               child: Center(
                 child: Text(
                   d,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.2,
-                    color: _AppPalette.inkMuted,
+                    color: tokens.inkMuted,
                   ),
                 ),
               ),
@@ -360,12 +539,14 @@ class _WeekdayHeader extends StatelessWidget {
 
 class _DayView extends StatelessWidget {
   final PlannerController controller;
+  final _ThemeTokens tokens;
   final DateTime now;
   final void Function(Appointment) onEdit;
   final VoidCallback onAdd;
 
   const _DayView({
     required this.controller,
+    required this.tokens,
     required this.now,
     required this.onEdit,
     required this.onAdd,
@@ -374,15 +555,17 @@ class _DayView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = controller.appointmentsForDay(controller.selectedDate);
+    final isCompact = controller.compactCardView;
+
     if (items.isEmpty) {
       return Center(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
           decoration: BoxDecoration(
-            color: _AppPalette.surface,
+            color: tokens.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _AppPalette.hairline),
+            border: Border.all(color: tokens.hairline),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -390,22 +573,22 @@ class _DayView extends StatelessWidget {
               Container(
                 width: 48,
                 height: 48,
-                decoration: const BoxDecoration(
-                  color: _AppPalette.primarySoft,
+                decoration: BoxDecoration(
+                  color: tokens.primarySoft,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.event_available_rounded,
                   size: 24,
-                  color: _AppPalette.primary,
+                  color: tokens.primary,
                 ),
               ),
               const SizedBox(height: 12),
               Text(
                 controller.tr('no_appointments'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: _AppPalette.inkSecondary,
+                style: TextStyle(
+                  color: tokens.inkSecondary,
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
@@ -413,7 +596,7 @@ class _DayView extends StatelessWidget {
               const SizedBox(height: 16),
               FilledButton.icon(
                 style: FilledButton.styleFrom(
-                  backgroundColor: _AppPalette.primary,
+                  backgroundColor: tokens.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -431,55 +614,65 @@ class _DayView extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
       itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, __) => SizedBox(height: isCompact ? 7 : 10),
       itemBuilder: (context, index) {
         final item = items[index];
         final isDone = item.isCompleted == true;
         final isMissed = item.isCompleted == false;
 
-        Color rowBg = _AppPalette.pendingBg;
-        Color borderColor = _AppPalette.pendingBorder;
-        Color timeBadgeBg = _AppPalette.pendingPill;
-        Color timeTextColor = _AppPalette.pendingText;
+        Color rowBg = tokens.pendingBg;
+        Color borderColor = tokens.pendingBorder;
+        Color timeBadgeBg = tokens.pendingPill;
+        Color timeTextColor = tokens.pendingText;
 
         if (isDone) {
-          rowBg = _AppPalette.doneBg;
-          borderColor = _AppPalette.doneBorder;
-          timeBadgeBg = _AppPalette.donePill;
-          timeTextColor = _AppPalette.doneText;
+          rowBg = tokens.doneBg;
+          borderColor = tokens.doneBorder;
+          timeBadgeBg = tokens.donePill;
+          timeTextColor = tokens.doneText;
         } else if (isMissed) {
-          rowBg = _AppPalette.missedBg;
-          borderColor = _AppPalette.missedBorder;
-          timeBadgeBg = _AppPalette.missedPill;
-          timeTextColor = _AppPalette.missedText;
+          rowBg = tokens.missedBg;
+          borderColor = tokens.missedBorder;
+          timeBadgeBg = tokens.missedPill;
+          timeTextColor = tokens.missedText;
         }
 
+        final endH = (item.endMinutes ~/ 60).toString().padLeft(2, '0');
+        final endM = (item.endMinutes % 60).toString().padLeft(2, '0');
+        final durationLabel =
+            '${item.formattedTime}–$endH:$endM (${item.durationMinutes} ${controller.tr('minutes_short')})';
+
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          padding: EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: isCompact ? 8 : 11,
+          ),
           decoration: BoxDecoration(
             color: rowBg,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(isCompact ? 14 : 18),
             border: Border.all(color: borderColor),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: isCompact ? 5 : 7,
+                ),
                 decoration: BoxDecoration(
                   color: timeBadgeBg,
-                  borderRadius: BorderRadius.circular(11),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   item.formattedTime,
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
-                    fontFeatures: const [FontFeature.tabularFigures()],
                     color: timeTextColor,
                   ),
                 ),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 10),
               Expanded(
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -491,22 +684,24 @@ class _DayView extends StatelessWidget {
                         item.clientName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 15,
+                          fontSize: isCompact ? 14 : 15,
                           letterSpacing: -0.2,
-                          color: _AppPalette.inkPrimary,
+                          color: tokens.inkPrimary,
                         ),
                       ),
-                      if (item.serviceName.isNotEmpty) ...[
+                      if (!isCompact) ...[
                         const SizedBox(height: 2),
                         Text(
-                          item.serviceName,
+                          item.serviceName.isNotEmpty
+                              ? '${item.serviceName} · $durationLabel'
+                              : durationLabel,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: _AppPalette.inkSecondary,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: tokens.inkSecondary,
                           ),
                         ),
                       ],
@@ -518,27 +713,30 @@ class _DayView extends StatelessWidget {
               _RowActionButton(
                 icon: Icons.edit_outlined,
                 active: false,
-                activeColor: _AppPalette.primary,
-                activeBg: _AppPalette.primarySoft,
-                iconColor: _AppPalette.inkSecondary,
+                activeColor: tokens.primary,
+                activeBg: tokens.primarySoft,
+                iconColor: tokens.inkSecondary,
+                tokens: tokens,
                 onTap: () => onEdit(item),
               ),
               const SizedBox(width: 6),
               _RowActionButton(
                 icon: Icons.check_rounded,
                 active: isDone,
-                activeColor: _AppPalette.doneText,
-                activeBg: _AppPalette.donePill,
-                iconColor: isDone ? _AppPalette.doneText : _AppPalette.inkSecondary,
+                activeColor: tokens.doneText,
+                activeBg: tokens.donePill,
+                iconColor: isDone ? tokens.doneText : tokens.inkSecondary,
+                tokens: tokens,
                 onTap: () => controller.toggleQuickStatus(item.id, true),
               ),
               const SizedBox(width: 6),
               _RowActionButton(
                 icon: Icons.close_rounded,
                 active: isMissed,
-                activeColor: _AppPalette.missedText,
-                activeBg: _AppPalette.missedPill,
-                iconColor: isMissed ? _AppPalette.missedText : _AppPalette.inkSecondary,
+                activeColor: tokens.missedText,
+                activeBg: tokens.missedPill,
+                iconColor: isMissed ? tokens.missedText : tokens.inkSecondary,
+                tokens: tokens,
                 onTap: () => controller.toggleQuickStatus(item.id, false),
               ),
             ],
@@ -555,6 +753,7 @@ class _RowActionButton extends StatelessWidget {
   final Color activeColor;
   final Color activeBg;
   final Color iconColor;
+  final _ThemeTokens tokens;
   final VoidCallback onTap;
 
   const _RowActionButton({
@@ -563,6 +762,7 @@ class _RowActionButton extends StatelessWidget {
     required this.activeColor,
     required this.activeBg,
     required this.iconColor,
+    required this.tokens,
     required this.onTap,
   });
 
@@ -575,10 +775,10 @@ class _RowActionButton extends StatelessWidget {
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: active ? activeBg : _AppPalette.surface.withOpacity(0.9),
+          color: active ? activeBg : tokens.surface.withOpacity(0.9),
           borderRadius: BorderRadius.circular(11),
           border: Border.all(
-            color: active ? activeColor : _AppPalette.pendingBorder,
+            color: active ? activeColor : tokens.pendingBorder,
             width: active ? 1.4 : 1,
           ),
         ),
@@ -594,11 +794,13 @@ class _RowActionButton extends StatelessWidget {
 
 class _WeekView extends StatelessWidget {
   final PlannerController controller;
+  final _ThemeTokens tokens;
   final DateTime now;
   final void Function(Appointment) onEdit;
 
   const _WeekView({
     required this.controller,
+    required this.tokens,
     required this.now,
     required this.onEdit,
   });
@@ -625,10 +827,10 @@ class _WeekView extends StatelessWidget {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
-            color: _AppPalette.surface,
+            color: tokens.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? _AppPalette.primary : _AppPalette.hairline,
+              color: isSelected ? tokens.primary : tokens.hairline,
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -648,22 +850,22 @@ class _WeekView extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
-                          color: isSelected ? _AppPalette.primary : _AppPalette.inkPrimary,
+                          color: isSelected ? tokens.primary : tokens.inkPrimary,
                         ),
                       ),
                       if (items.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: _AppPalette.primarySoft,
+                            color: tokens.primarySoft,
                             borderRadius: BorderRadius.circular(99),
                           ),
                           child: Text(
                             '${items.length}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: _AppPalette.primary,
+                              color: tokens.primary,
                             ),
                           ),
                         ),
@@ -681,18 +883,18 @@ class _WeekView extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                           decoration: BoxDecoration(
-                            color: _AppPalette.surfaceSubtle,
+                            color: tokens.surfaceSubtle,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: _AppPalette.hairline),
+                            border: Border.all(color: tokens.hairline),
                           ),
                           child: Row(
                             children: [
                               Text(
                                 item.formattedTime,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 13,
-                                  color: _AppPalette.primary,
+                                  color: tokens.primary,
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -701,20 +903,20 @@ class _WeekView extends StatelessWidget {
                                   item.clientName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
-                                    color: _AppPalette.inkPrimary,
+                                    color: tokens.inkPrimary,
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 item.statusLabel(now, lang: controller.languageCode),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: _AppPalette.inkSecondary,
+                                  color: tokens.inkSecondary,
                                 ),
                               ),
                             ],
@@ -734,10 +936,12 @@ class _WeekView extends StatelessWidget {
 
 class _MonthView extends StatelessWidget {
   final PlannerController controller;
+  final _ThemeTokens tokens;
   final void Function(DateTime) onSelectDay;
 
   const _MonthView({
     required this.controller,
+    required this.tokens,
     required this.onSelectDay,
   });
 
@@ -758,9 +962,9 @@ class _MonthView extends StatelessWidget {
     return Column(
       children: [
         Container(
-          decoration: const BoxDecoration(
-            color: _AppPalette.surface,
-            border: Border(bottom: BorderSide(color: _AppPalette.hairline)),
+          decoration: BoxDecoration(
+            color: tokens.surface,
+            border: Border(bottom: BorderSide(color: tokens.hairline)),
           ),
           padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
           child: Column(
@@ -778,10 +982,10 @@ class _MonthView extends StatelessWidget {
                   ),
                   Text(
                     monthTitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
-                      color: _AppPalette.inkPrimary,
+                      color: tokens.inkPrimary,
                     ),
                   ),
                   IconButton(
@@ -818,10 +1022,10 @@ class _MonthView extends StatelessWidget {
                         alignment: Alignment.center,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
-                          color: isCurrentMonth ? _AppPalette.primary : _AppPalette.surfaceSubtle,
+                          color: isCurrentMonth ? tokens.primary : tokens.surfaceSubtle,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: isCurrentMonth ? _AppPalette.primary : _AppPalette.hairline,
+                            color: isCurrentMonth ? tokens.primary : tokens.hairline,
                           ),
                         ),
                         child: Text(
@@ -829,7 +1033,7 @@ class _MonthView extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: isCurrentMonth ? Colors.white : _AppPalette.inkSecondary,
+                            color: isCurrentMonth ? Colors.white : tokens.inkSecondary,
                           ),
                         ),
                       ),
@@ -866,10 +1070,10 @@ class _MonthView extends StatelessWidget {
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? _AppPalette.primary : _AppPalette.surface,
+                    color: isSelected ? tokens.primary : tokens.surface,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isSelected ? _AppPalette.primary : _AppPalette.hairline,
+                      color: isSelected ? tokens.primary : tokens.hairline,
                     ),
                   ),
                   child: Column(
@@ -880,7 +1084,7 @@ class _MonthView extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 14,
-                          color: isSelected ? Colors.white : _AppPalette.inkPrimary,
+                          color: isSelected ? Colors.white : tokens.inkPrimary,
                         ),
                       ),
                       if (count > 0) ...[
@@ -890,7 +1094,7 @@ class _MonthView extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? Colors.white.withOpacity(0.22)
-                                : _AppPalette.primarySoft,
+                                : tokens.primarySoft,
                             borderRadius: BorderRadius.circular(99),
                           ),
                           child: Text(
@@ -898,7 +1102,7 @@ class _MonthView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: isSelected ? Colors.white : _AppPalette.primary,
+                              color: isSelected ? Colors.white : tokens.primary,
                             ),
                           ),
                         ),
