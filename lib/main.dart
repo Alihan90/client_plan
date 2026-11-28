@@ -167,33 +167,6 @@ class ClientPlannerApp extends StatelessWidget {
               scrolledUnderElevation: 0.5,
               foregroundColor: tokens.inkPrimary,
             ),
-            segmentedButtonTheme: SegmentedButtonThemeData(
-              showSelectedIcon: false,
-              style: ButtonStyle(
-                visualDensity: VisualDensity.compact,
-                shape: WidgetStatePropertyAll(
-                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                side: WidgetStatePropertyAll(
-                  BorderSide(color: tokens.hairline),
-                ),
-                backgroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return tokens.primary;
-                  }
-                  return tokens.surfaceSubtle;
-                }),
-                foregroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return Colors.white;
-                  }
-                  return tokens.inkSecondary;
-                }),
-                textStyle: const WidgetStatePropertyAll(
-                  TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                ),
-              ),
-            ),
           ),
           home: PlannerHomePage(controller: controller),
         );
@@ -232,11 +205,10 @@ class PlannerHomePage extends StatelessWidget {
     );
   }
 
-  Future<void> _openSettingsSheet(BuildContext context, _ThemeTokens tokens) async {
+  Future<void> _openSettingsSheet(BuildContext context) async {
     FocusScope.of(context).unfocus();
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: tokens.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -245,77 +217,83 @@ class PlannerHomePage extends StatelessWidget {
           animation: controller,
           builder: (_, __) {
             final t = _ThemeTokens.fromDark(controller.isDarkTheme);
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: t.hairline,
-                          borderRadius: BorderRadius.circular(99),
+            return Container(
+              decoration: BoxDecoration(
+                color: t.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: t.hairline,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      controller.tr('settings'),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: t.inkPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        controller.tr('dark_theme'),
+                      const SizedBox(height: 14),
+                      Text(
+                        controller.tr('settings'),
                         style: TextStyle(
-                          fontWeight: FontWeight.w600,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
                           color: t.inkPrimary,
                         ),
                       ),
-                      subtitle: Text(
-                        controller.tr('dark_theme_sub'),
-                        style: TextStyle(fontSize: 12, color: t.inkSecondary),
-                      ),
-                      value: controller.isDarkTheme,
-                      onChanged: controller.setDarkTheme,
-                    ),
-                    Divider(color: t.hairline),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        controller.tr('compact_cards'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: t.inkPrimary,
+                      const SizedBox(height: 12),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          controller.tr('dark_theme'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: t.inkPrimary,
+                          ),
                         ),
+                        subtitle: Text(
+                          controller.tr('dark_theme_sub'),
+                          style: TextStyle(fontSize: 12, color: t.inkSecondary),
+                        ),
+                        value: controller.isDarkTheme,
+                        onChanged: controller.setDarkTheme,
                       ),
-                      subtitle: Text(
-                        controller.tr('compact_cards_sub'),
-                        style: TextStyle(fontSize: 12, color: t.inkSecondary),
+                      Divider(color: t.hairline),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          controller.tr('compact_cards'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: t.inkPrimary,
+                          ),
+                        ),
+                        subtitle: Text(
+                          controller.tr('compact_cards_sub'),
+                          style: TextStyle(fontSize: 12, color: t.inkSecondary),
+                        ),
+                        value: controller.compactCardView,
+                        onChanged: controller.setCompactCardView,
                       ),
-                      value: controller.compactCardView,
-                      onChanged: controller.setCompactCardView,
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: t.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      const SizedBox(height: 12),
+                      FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: t.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () => Navigator.of(sheetCtx).pop(),
+                        child: Text(controller.tr('close')),
                       ),
-                      onPressed: () => Navigator.of(sheetCtx).pop(),
-                      child: Text(controller.tr('close')),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
@@ -327,147 +305,118 @@ class PlannerHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        final tokens = _ThemeTokens.fromDark(controller.isDarkTheme);
-        final now = DateTime.now();
-        final locStr = controller.locale.toString();
-        final rawHeaderDate = DateFormat('d MMMM yyyy', locStr).format(controller.selectedDate);
-        final headerDate = rawHeaderDate.isEmpty
-            ? rawHeaderDate
-            : '${rawHeaderDate[0].toUpperCase()}${rawHeaderDate.substring(1)}';
+    final tokens = _ThemeTokens.fromDark(controller.isDarkTheme);
+    final now = DateTime.now();
+    final locStr = controller.locale.toString();
+    final rawHeaderDate = DateFormat('d MMMM yyyy', locStr).format(controller.selectedDate);
+    final headerDate = rawHeaderDate.isEmpty
+        ? rawHeaderDate
+        : '${rawHeaderDate[0].toUpperCase()}${rawHeaderDate.substring(1)}';
 
-        return Scaffold(
-          appBar: AppBar(
-            titleSpacing: 4,
-            leading: IconButton(
-              icon: const Icon(Icons.chevron_left_rounded, size: 26),
-              onPressed: () => controller.stepPeriod(-1),
+    return Scaffold(
+      appBar: AppBar(
+        titleSpacing: 4,
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left_rounded, size: 26),
+          onPressed: () => controller.stepPeriod(-1),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              controller.tr('app_title'),
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                letterSpacing: -0.3,
+                color: tokens.inkPrimary,
+              ),
             ),
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  controller.tr('app_title'),
+            Text(
+              headerDate,
+              style: TextStyle(
+                fontSize: 12,
+                color: tokens.inkSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chevron_right_rounded, size: 26),
+            onPressed: () => controller.stepPeriod(1),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 4),
+            decoration: BoxDecoration(
+              color: tokens.surfaceSubtle,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: tokens.hairline),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: controller.cycleLanguage,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Text(
+                  controller.languageCode.toUpperCase(),
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 18,
-                    letterSpacing: -0.3,
+                    fontSize: 11,
+                    letterSpacing: 0.5,
                     color: tokens.inkPrimary,
                   ),
                 ),
-                Text(
-                  headerDate,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: tokens.inkSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.settings_outlined, size: 21, color: tokens.inkSecondary),
+            tooltip: controller.tr('settings'),
+            onPressed: () => _openSettingsSheet(context),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: tokens.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onPressed: () => _openCreateDialog(context, controller.selectedDate),
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: Text(
+                controller.tr('book'),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: tokens.surface,
+              border: Border(bottom: BorderSide(color: tokens.hairline)),
+            ),
+            padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+            child: Column(
+              children: [
+                _ViewModeBar(controller: controller, tokens: tokens),
+                const SizedBox(height: 12),
+                _WeekdayHeader(controller: controller, tokens: tokens),
               ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.chevron_right_rounded, size: 26),
-                onPressed: () => controller.stepPeriod(1),
-              ),
-              Container(
-                margin: const EdgeInsets.only(right: 4),
-                decoration: BoxDecoration(
-                  color: tokens.surfaceSubtle,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: tokens.hairline),
-                ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: controller.cycleLanguage,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    child: Text(
-                      controller.languageCode.toUpperCase(),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                        letterSpacing: 0.5,
-                        color: tokens.inkPrimary,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: Icon(Icons.settings_outlined, size: 21, color: tokens.inkSecondary),
-                tooltip: controller.tr('settings'),
-                onPressed: () => _openSettingsSheet(context, tokens),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: tokens.primary,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  onPressed: () => _openCreateDialog(context, controller.selectedDate),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: Text(
-                    controller.tr('book'),
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                ),
-              ),
-            ],
           ),
-          body: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: tokens.surface,
-                  border: Border(bottom: BorderSide(color: tokens.hairline)),
-                ),
-                padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      child: SegmentedButton<PlannerViewMode>(
-                        segments: [
-                          ButtonSegment<PlannerViewMode>(
-                            value: PlannerViewMode.day,
-                            label: Text(controller.tr('day')),
-                          ),
-                          ButtonSegment<PlannerViewMode>(
-                            value: PlannerViewMode.week,
-                            label: Text(controller.tr('week')),
-                          ),
-                          ButtonSegment<PlannerViewMode>(
-                            value: PlannerViewMode.month,
-                            label: Text(controller.tr('month')),
-                          ),
-                        ],
-                        selected: <PlannerViewMode>{controller.viewMode},
-                        onSelectionChanged: (Set<PlannerViewMode> set) {
-                          if (set.isNotEmpty) {
-                            controller.setViewMode(set.first);
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _WeekdayHeader(controller: controller, tokens: tokens),
-                  ],
-                ),
-              ),
-              Expanded(child: _buildBody(context, now, tokens)),
-            ],
-          ),
-        );
-      },
+          Expanded(child: _buildBody(context, now, tokens)),
+        ],
+      ),
     );
   }
 
@@ -495,6 +444,58 @@ class PlannerHomePage extends StatelessWidget {
           onSelectDay: (d) => controller.selectDate(d),
         );
     }
+  }
+}
+
+class _ViewModeBar extends StatelessWidget {
+  final PlannerController controller;
+  final _ThemeTokens tokens;
+
+  const _ViewModeBar({required this.controller, required this.tokens});
+
+  @override
+  Widget build(BuildContext context) {
+    final modes = [
+      (PlannerViewMode.day, controller.tr('day')),
+      (PlannerViewMode.week, controller.tr('week')),
+      (PlannerViewMode.month, controller.tr('month')),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: tokens.surfaceSubtle,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: tokens.hairline),
+      ),
+      child: Row(
+        children: modes.map((entry) {
+          final isSelected = controller.viewMode == entry.$1;
+          return Expanded(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(10),
+              onTap: () => controller.setViewMode(entry.$1),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected ? tokens.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  entry.$2,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : tokens.inkSecondary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 }
 
