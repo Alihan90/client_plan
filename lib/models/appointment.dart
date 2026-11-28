@@ -27,6 +27,36 @@ class Appointment {
     return '$h:$m';
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'clientName': clientName,
+      'serviceName': serviceName,
+      'year': normalizedDate.year,
+      'month': normalizedDate.month,
+      'day': normalizedDate.day,
+      'startMinutes': startMinutes,
+      'durationMinutes': durationMinutes,
+      'isCompleted': isCompleted,
+    };
+  }
+
+  factory Appointment.fromJson(Map<String, dynamic> json) {
+    return Appointment(
+      id: json['id'] as String,
+      clientName: json['clientName'] as String? ?? '',
+      serviceName: json['serviceName'] as String? ?? '',
+      date: DateTime(
+        json['year'] as int,
+        json['month'] as int,
+        json['day'] as int,
+      ),
+      startMinutes: json['startMinutes'] as int? ?? 540,
+      durationMinutes: json['durationMinutes'] as int? ?? 60,
+      isCompleted: json['isCompleted'] as bool?,
+    );
+  }
+
   String statusLabel(DateTime now, {String lang = 'ru'}) {
     if (isCompleted == true) {
       switch (lang) {
