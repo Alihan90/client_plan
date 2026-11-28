@@ -1,16 +1,24 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/appointment.dart';
 import '../services/widget_sync_service.dart';
 
 enum PlannerViewMode { day, week, month }
 
 class PlannerController extends ChangeNotifier {
+  static const _kAppointmentsKey = 'planner_appointments_v1';
+  static const _kLanguageKey = 'planner_language_v1';
+  static const _kDarkThemeKey = 'planner_dark_theme_v1';
+  static const _kCompactCardsKey = 'planner_compact_cards_v1';
+
   final List<Appointment> _appointments = [];
   DateTime _selectedDate = DateTime.now();
   PlannerViewMode _viewMode = PlannerViewMode.day;
   String _languageCode = 'ru';
   bool _isDarkTheme = false;
   bool _compactCardView = false;
+  SharedPreferences? _prefs;
 
   PlannerController() {
     _selectedDate = DateTime(
@@ -18,7 +26,51 @@ class PlannerController extends ChangeNotifier {
       _selectedDate.month,
       _selectedDate.day,
     );
-    _syncWidget();
+  }
+
+  Future<void> initStorage() async {
+    _prefs = await SharedPreferences.getInstance();
+
+    final savedLang = _prefs?.getString(_kLanguageKey);
+    if (savedLang != null && ['ru', 'uk', 'en'].contains(savedLang)) {
+      _languageCode = savedLang;
+    }
+
+    _isDarkTheme = _prefs?.getBool(_kDarkThemeKey) ?? false;
+    _compactCardView = _prefs?.getBool(_kCompactCardsKey) ?? false;
+
+    final rawJson = _prefs?.getString(_kAppointmentsKey);
+    if (rawJson != null && rawJson.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawJson) as List<dynamic>;
+        _appointments
+          ..clear()
+          ..addAll(
+            decoded
+                .map((item) => Appointment.fromJson(item as Map<String, dynamic>)),
+          );
+      } catch (_) {
+        // Если данные повреждены, не роняем приложение
+      }
+    }
+
+    notifyListeners();
+    await _syncWidget();
+  }
+
+  Future<void> _persistAppointments() async {
+    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = prefs;
+    final encoded = jsonEncode(_appointments.map((a) => a.toJson()).toList());
+    await prefs.setString(_kAppointmentsKey, encoded);
+  }
+
+  Future<void> _persistSettings() async {
+    final prefs = _prefs ?? await SharedPreferences.getInstance();
+    _prefs = prefs;
+    await prefs.setString(_kLanguageKey, _languageCode);
+    await prefs.setBool(_kDarkThemeKey, _isDarkTheme);
+    await prefs.setBool(_kCompactCardsKey, _compactCardView);
   }
 
   List<Appointment> get appointments => List.unmodifiable(_appointments);
@@ -186,6 +238,7 @@ class PlannerController extends ChangeNotifier {
     if (_languageCode == code) return;
     _languageCode = code;
     notifyListeners();
+    _persistSettings();
     _syncWidget();
   }
 
@@ -203,12 +256,14 @@ class PlannerController extends ChangeNotifier {
     if (_isDarkTheme == value) return;
     _isDarkTheme = value;
     notifyListeners();
+    _persistSettings();
   }
 
   void setCompactCardView(bool value) {
     if (_compactCardView == value) return;
     _compactCardView = value;
     notifyListeners();
+    _persistSettings();
   }
 
   void selectDate(DateTime date) {
@@ -286,6 +341,7 @@ class PlannerController extends ChangeNotifier {
 
     _selectedDate = baseDate;
     notifyListeners();
+    _persistAppointments();
     _syncWidget();
   }
 
@@ -297,6 +353,7 @@ class PlannerController extends ChangeNotifier {
     );
     _selectedDate = _appointments[index].normalizedDate;
     notifyListeners();
+    _persistAppointments();
     _syncWidget();
   }
 
@@ -310,12 +367,14 @@ class PlannerController extends ChangeNotifier {
       clearManualStatus: nextStatus == null,
     );
     notifyListeners();
+    _persistAppointments();
     _syncWidget();
   }
 
   void deleteAppointment(String id) {
     _appointments.removeWhere((a) => a.id == id);
     notifyListeners();
+    _persistAppointments();
     _syncWidget();
   }
 
