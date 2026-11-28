@@ -26,6 +26,7 @@ class _ThemeTokens {
   final Color inkMuted;
   final Color hairline;
   final Color primary;
+  final Color primaryAccent;
   final Color primarySoft;
 
   final Color pendingBg;
@@ -53,6 +54,7 @@ class _ThemeTokens {
     required this.inkMuted,
     required this.hairline,
     required this.primary,
+    required this.primaryAccent,
     required this.primarySoft,
     required this.pendingBg,
     required this.pendingBorder,
@@ -72,53 +74,55 @@ class _ThemeTokens {
     if (isDark) {
       return const _ThemeTokens._(
         isDark: true,
-        canvas: Color(0xFF0B0F14),
-        surface: Color(0xFF121821),
-        surfaceSubtle: Color(0xFF18202C),
-        inkPrimary: Color(0xFFF3F4F6),
-        inkSecondary: Color(0xFF9CA3AF),
-        inkMuted: Color(0xFF6B7280),
-        hairline: Color(0xFF242E3D),
-        primary: Color(0xFF14B8A6),
-        primarySoft: Color(0xFF132E2C),
-        pendingBg: Color(0xFF161E29),
-        pendingBorder: Color(0xFF2A3546),
-        pendingPill: Color(0xFF222C3B),
-        pendingText: Color(0xFFD1D5DB),
-        doneBg: Color(0xFF0E261D),
-        doneBorder: Color(0xFF1E563F),
-        donePill: Color(0xFF153B2C),
-        doneText: Color(0xFF4ADE80),
-        missedBg: Color(0xFF291316),
-        missedBorder: Color(0xFF5C232A),
-        missedPill: Color(0xFF3E191E),
+        canvas: Color(0xFF090D12),
+        surface: Color(0xFF111720),
+        surfaceSubtle: Color(0xFF182230),
+        inkPrimary: Color(0xFFF8FAFC),
+        inkSecondary: Color(0xFF94A3B8),
+        inkMuted: Color(0xFF64748B),
+        hairline: Color(0xFF222D3D),
+        primary: Color(0xFF0D9488),
+        primaryAccent: Color(0xFF2DD4BF),
+        primarySoft: Color(0xFF112A2A),
+        pendingBg: Color(0xFF151D28),
+        pendingBorder: Color(0xFF273344),
+        pendingPill: Color(0xFF202B3A),
+        pendingText: Color(0xFFCBD5E1),
+        doneBg: Color(0xFF0C241B),
+        doneBorder: Color(0xFF1B4F3A),
+        donePill: Color(0xFF133829),
+        doneText: Color(0xFF34D399),
+        missedBg: Color(0xFF261115),
+        missedBorder: Color(0xFF542029),
+        missedPill: Color(0xFF3A161D),
         missedText: Color(0xFFF87171),
       );
     }
 
     return const _ThemeTokens._(
       isDark: false,
-      canvas: Color(0xFFF3F5F4),
+      canvas: Color(0xFFEEF2F1),
       surface: Color(0xFFFFFFFF),
-      surfaceSubtle: Color(0xFFF8FAFC),
-      inkPrimary: Color(0xFF101828),
-      inkSecondary: Color(0xFF667085),
-      inkMuted: Color(0xFF98A2B3),
-      hairline: Color(0xFFE4E7EC),
-      primary: Color(0xFF0D5C54),
-      primarySoft: Color(0xFFE6F4F1),
-      pendingBg: Color(0xFFF2F4F7),
-      pendingBorder: Color(0xFFD0D5DD),
-      pendingPill: Color(0xFFE4E7EC),
-      pendingText: Color(0xFF344054),
-      doneBg: Color(0xFFECFDF3),
-      doneBorder: Color(0xFFA6F4C5),
-      donePill: Color(0xFFD1FADF),
-      doneText: Color(0xFF027A48),
-      missedBg: Color(0xFFFEF3F2),
-      missedBorder: Color(0xFFFECDCA),
-      missedPill: Color(0xFFFEE4E2),
-      missedText: Color(0xFFB42318),
+      surfaceSubtle: Color(0xFFF6F8F8),
+      inkPrimary: Color(0xFF0F172A),
+      inkSecondary: Color(0xFF475569),
+      inkMuted: Color(0xFF94A3B8),
+      hairline: Color(0xFFE2E8F0),
+      primary: Color(0xFF0F5E56),
+      primaryAccent: Color(0xFF14B8A6),
+      primarySoft: Color(0xFFE0F2EF),
+      pendingBg: Color(0xFFF1F5F9),
+      pendingBorder: Color(0xFFCBD5E1),
+      pendingPill: Color(0xFFE2E8F0),
+      pendingText: Color(0xFF334155),
+      doneBg: Color(0xFFECFDF5),
+      doneBorder: Color(0xFF86EFAC),
+      donePill: Color(0xFFD1FAE5),
+      doneText: Color(0xFF047857),
+      missedBg: Color(0xFFFEF2F2),
+      missedBorder: Color(0xFFFECACA),
+      missedPill: Color(0xFFFEE2E2),
+      missedText: Color(0xFFB91C1C),
     );
   }
 }
@@ -180,6 +184,15 @@ class PlannerHomePage extends StatelessWidget {
 
   const PlannerHomePage({super.key, required this.controller});
 
+  String _todayLabel(String lang) {
+    if (lang == 'uk') return 'Сьогодні';
+    if (lang == 'en') return 'Today';
+    return 'Сегодня';
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
   Future<void> _openCreateDialog(BuildContext context, DateTime date) async {
     FocusScope.of(context).unfocus();
     await showDialog<void>(
@@ -224,14 +237,14 @@ class PlannerHomePage extends StatelessWidget {
               ),
               child: SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 20),
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Center(
                         child: Container(
-                          width: 40,
+                          width: 42,
                           height: 4,
                           decoration: BoxDecoration(
                             color: t.hairline,
@@ -244,7 +257,8 @@ class PlannerHomePage extends StatelessWidget {
                         controller.tr('settings'),
                         style: TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.3,
                           color: t.inkPrimary,
                         ),
                       ),
@@ -282,15 +296,19 @@ class PlannerHomePage extends StatelessWidget {
                         value: controller.compactCardView,
                         onChanged: controller.setCompactCardView,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       FilledButton(
                         style: FilledButton.styleFrom(
                           backgroundColor: t.primary,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                         ),
                         onPressed: () => Navigator.of(sheetCtx).pop(),
-                        child: Text(controller.tr('close')),
+                        child: Text(
+                          controller.tr('close'),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
                       ),
                     ],
                   ),
@@ -307,6 +325,7 @@ class PlannerHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = _ThemeTokens.fromDark(controller.isDarkTheme);
     final now = DateTime.now();
+    final isSelectedToday = _isSameDay(controller.selectedDate, now);
     final locStr = controller.locale.toString();
     final rawHeaderDate = DateFormat('d MMMM yyyy', locStr).format(controller.selectedDate);
     final headerDate = rawHeaderDate.isEmpty
@@ -323,14 +342,43 @@ class PlannerHomePage extends StatelessWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              controller.tr('app_title'),
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-                letterSpacing: -0.3,
-                color: tokens.inkPrimary,
-              ),
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    controller.tr('app_title'),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                      letterSpacing: -0.35,
+                      color: tokens.inkPrimary,
+                    ),
+                  ),
+                ),
+                if (!isSelectedToday) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(99),
+                    onTap: () => controller.selectDate(now),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: tokens.primarySoft,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        _todayLabel(controller.languageCode),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: tokens.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
             Text(
               headerDate,
@@ -351,18 +399,18 @@ class PlannerHomePage extends StatelessWidget {
             margin: const EdgeInsets.only(right: 4),
             decoration: BoxDecoration(
               color: tokens.surfaceSubtle,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(11),
               border: Border.all(color: tokens.hairline),
             ),
             child: InkWell(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(11),
               onTap: controller.cycleLanguage,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 child: Text(
                   controller.languageCode.toUpperCase(),
                   style: TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     fontSize: 11,
                     letterSpacing: 0.5,
                     color: tokens.inkPrimary,
@@ -372,26 +420,45 @@ class PlannerHomePage extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.settings_outlined, size: 21, color: tokens.inkSecondary),
+            icon: Icon(Icons.tune_rounded, size: 21, color: tokens.inkSecondary),
             tooltip: controller.tr('settings'),
             onPressed: () => _openSettingsSheet(context),
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: tokens.primary,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.only(right: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [tokens.primary, tokens.primaryAccent],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(13),
               ),
-              onPressed: () => _openCreateDialog(context, controller.selectedDate),
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: Text(
-                controller.tr('book'),
-                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(13),
+                  onTap: () => _openCreateDialog(context, controller.selectedDate),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.add_rounded, size: 18, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Text(
+                          controller.tr('book'),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -405,7 +472,7 @@ class PlannerHomePage extends StatelessWidget {
               color: tokens.surface,
               border: Border(bottom: BorderSide(color: tokens.hairline)),
             ),
-            padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
             child: Column(
               children: [
                 _ViewModeBar(controller: controller, tokens: tokens),
@@ -462,10 +529,10 @@ class _ViewModeBar extends StatelessWidget {
     ];
 
     return Container(
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: tokens.surfaceSubtle,
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(color: tokens.hairline),
       ),
       child: Row(
@@ -473,20 +540,20 @@ class _ViewModeBar extends StatelessWidget {
           final isSelected = controller.viewMode == entry.$1;
           return Expanded(
             child: InkWell(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(11),
               onTap: () => controller.setViewMode(entry.$1),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isSelected ? tokens.primary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(11),
                 ),
                 child: Text(
                   entry.$2,
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: isSelected ? Colors.white : tokens.inkSecondary,
                   ),
                 ),
@@ -525,7 +592,7 @@ class _WeekdayHeader extends StatelessWidget {
                   d,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0.2,
                     color: tokens.inkMuted,
                   ),
@@ -562,36 +629,36 @@ class _DayView extends StatelessWidget {
       return Center(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 24),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
           decoration: BoxDecoration(
             color: tokens.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: tokens.hairline),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 54,
+                height: 54,
                 decoration: BoxDecoration(
                   color: tokens.primarySoft,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.event_available_rounded,
-                  size: 24,
+                  Icons.calendar_month_rounded,
+                  size: 26,
                   color: tokens.primary,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Text(
                 controller.tr('no_appointments'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: tokens.inkSecondary,
                   fontSize: 15,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 16),
@@ -600,11 +667,15 @@ class _DayView extends StatelessWidget {
                   backgroundColor: tokens.primary,
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 onPressed: onAdd,
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text(controller.tr('book')),
+                label: Text(
+                  controller.tr('book'),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
@@ -615,7 +686,7 @@ class _DayView extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
       itemCount: items.length,
-      separatorBuilder: (_, __) => SizedBox(height: isCompact ? 7 : 10),
+      separatorBuilder: (_, __) => SizedBox(height: isCompact ? 8 : 11),
       itemBuilder: (context, index) {
         final item = items[index];
         final isDone = item.isCompleted == true;
@@ -645,35 +716,35 @@ class _DayView extends StatelessWidget {
 
         return Container(
           padding: EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: isCompact ? 8 : 11,
+            horizontal: 13,
+            vertical: isCompact ? 9 : 12,
           ),
           decoration: BoxDecoration(
             color: rowBg,
-            borderRadius: BorderRadius.circular(isCompact ? 14 : 18),
-            border: Border.all(color: borderColor),
+            borderRadius: BorderRadius.circular(isCompact ? 15 : 20),
+            border: Border.all(color: borderColor, width: 1.15),
           ),
           child: Row(
             children: [
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: isCompact ? 5 : 7,
+                  horizontal: 10,
+                  vertical: isCompact ? 6 : 8,
                 ),
                 decoration: BoxDecoration(
                   color: timeBadgeBg,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   item.formattedTime,
                   style: TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     fontSize: 13,
                     color: timeTextColor,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 11),
               Expanded(
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -687,13 +758,13 @@ class _DayView extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: isCompact ? 14 : 15,
-                          letterSpacing: -0.2,
+                          fontSize: isCompact ? 14 : 15.5,
+                          letterSpacing: -0.25,
                           color: tokens.inkPrimary,
                         ),
                       ),
                       if (!isCompact) ...[
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Text(
                           item.serviceName.isNotEmpty
                               ? '${item.serviceName} · $durationLabel'
@@ -702,6 +773,7 @@ class _DayView extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
+                            fontWeight: FontWeight.w500,
                             color: tokens.inkSecondary,
                           ),
                         ),
@@ -773,14 +845,14 @@ class _RowActionButton extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
-        width: 34,
-        height: 34,
+        width: 35,
+        height: 35,
         decoration: BoxDecoration(
-          color: active ? activeBg : tokens.surface.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(11),
+          color: active ? activeBg : tokens.surface.withOpacity(0.92),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: active ? activeColor : tokens.pendingBorder,
-            width: active ? 1.4 : 1,
+            width: active ? 1.5 : 1,
           ),
         ),
         child: Icon(
@@ -829,7 +901,7 @@ class _WeekView extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 10),
           decoration: BoxDecoration(
             color: tokens.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: isSelected ? tokens.primary : tokens.hairline,
               width: isSelected ? 1.5 : 1,
@@ -856,7 +928,7 @@ class _WeekView extends StatelessWidget {
                       ),
                       if (items.isNotEmpty)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                           decoration: BoxDecoration(
                             color: tokens.primarySoft,
                             borderRadius: BorderRadius.circular(99),
@@ -879,13 +951,13 @@ class _WeekView extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(13),
                         onTap: () => onEdit(item),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
                           decoration: BoxDecoration(
                             color: tokens.surfaceSubtle,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(13),
                             border: Border.all(color: tokens.hairline),
                           ),
                           child: Row(
@@ -893,7 +965,7 @@ class _WeekView extends StatelessWidget {
                               Text(
                                 item.formattedTime,
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w800,
                                   fontSize: 13,
                                   color: tokens.primary,
                                 ),
@@ -1014,7 +1086,7 @@ class _MonthView extends StatelessWidget {
                     final shortMonth = rawShort.replaceAll('.', '');
 
                     return InkWell(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(11),
                       onTap: () {
                         final maxDay = DateTime(sel.year, monthNum + 1, 0).day;
                         onSelectDay(DateTime(sel.year, monthNum, sel.day.clamp(1, maxDay)));
@@ -1024,7 +1096,7 @@ class _MonthView extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           color: isCurrentMonth ? tokens.primary : tokens.surfaceSubtle,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(11),
                           border: Border.all(
                             color: isCurrentMonth ? tokens.primary : tokens.hairline,
                           ),
@@ -1033,7 +1105,7 @@ class _MonthView extends StatelessWidget {
                           shortMonth,
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w700,
                             color: isCurrentMonth ? Colors.white : tokens.inkSecondary,
                           ),
                         ),
@@ -1091,7 +1163,7 @@ class _MonthView extends StatelessWidget {
                       if (count > 0) ...[
                         const SizedBox(height: 2),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? Colors.white.withOpacity(0.22)
