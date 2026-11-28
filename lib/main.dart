@@ -13,6 +13,7 @@ Future<void> main() async {
   await initializeDateFormatting('en_US');
 
   final controller = PlannerController();
+  await controller.initStorage();
   runApp(ClientPlannerApp(controller: controller));
 }
 
