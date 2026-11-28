@@ -121,6 +121,10 @@ class PlannerHomePage extends StatelessWidget {
               ],
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+                onPressed: () => controller.stepPeriod(1),
+              ),
               Padding(
                 padding: const EdgeInsets.only(right: 6),
                 child: OutlinedButton(
@@ -316,80 +320,88 @@ class _DayView extends StatelessWidget {
           timeTextColor = const Color(0xFFB91C1C);
         }
 
-        return Material(
-          color: rowBg,
-          borderRadius: BorderRadius.circular(16),
-          child: InkWell(
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: rowBg,
             borderRadius: BorderRadius.circular(16),
-            onTap: () => onEdit(item),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: borderColor),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: timeBadgeBg,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      item.formattedTime,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        color: timeTextColor,
-                      ),
-                    ),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: timeBadgeBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  item.formattedTime,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: timeTextColor,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onEdit(item),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.clientName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      if (item.serviceName.isNotEmpty) ...[
+                        const SizedBox(height: 2),
                         Text(
-                          item.clientName,
+                          item.serviceName,
                           style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            color: Color(0xFF0F172A),
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
                           ),
                         ),
-                        if (item.serviceName.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            item.serviceName,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
                       ],
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 6),
-                  _StatusActionButton(
-                    icon: Icons.check_rounded,
-                    active: isDone,
-                    activeColor: const Color(0xFF16A34A),
-                    activeBg: const Color(0xFFDCFCE7),
-                    onTap: () => controller.toggleQuickStatus(item.id, true),
-                  ),
-                  const SizedBox(width: 6),
-                  _StatusActionButton(
-                    icon: Icons.close_rounded,
-                    active: isMissed,
-                    activeColor: const Color(0xFFDC2626),
-                    activeBg: const Color(0xFFFEE2E2),
-                    onTap: () => controller.toggleQuickStatus(item.id, false),
-                  ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(width: 6),
+              _RowActionButton(
+                icon: Icons.edit_rounded,
+                active: false,
+                activeColor: const Color(0xFF0F766E),
+                activeBg: const Color(0xFFE6FFFA),
+                iconColor: const Color(0xFF475569),
+                onTap: () => onEdit(item),
+              ),
+              const SizedBox(width: 6),
+              _RowActionButton(
+                icon: Icons.check_rounded,
+                active: isDone,
+                activeColor: const Color(0xFF16A34A),
+                activeBg: const Color(0xFFDCFCE7),
+                iconColor: isDone ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                onTap: () => controller.toggleQuickStatus(item.id, true),
+              ),
+              const SizedBox(width: 6),
+              _RowActionButton(
+                icon: Icons.close_rounded,
+                active: isMissed,
+                activeColor: const Color(0xFFDC2626),
+                activeBg: const Color(0xFFFEE2E2),
+                iconColor: isMissed ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                onTap: () => controller.toggleQuickStatus(item.id, false),
+              ),
+            ],
           ),
         );
       },
@@ -397,31 +409,33 @@ class _DayView extends StatelessWidget {
   }
 }
 
-class _StatusActionButton extends StatelessWidget {
+class _RowActionButton extends StatelessWidget {
   final IconData icon;
   final bool active;
   final Color activeColor;
   final Color activeBg;
+  final Color iconColor;
   final VoidCallback onTap;
 
-  const _StatusActionButton({
+  const _RowActionButton({
     required this.icon,
     required this.active,
     required this.activeColor,
     required this.activeBg,
+    required this.iconColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(10),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: active ? activeBg : Colors.white.withValues(alpha: 0.75),
+          color: active ? activeBg : Colors.white.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: active ? activeColor : const Color(0xFFCBD5E1),
@@ -430,8 +444,8 @@ class _StatusActionButton extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          size: 19,
-          color: active ? activeColor : const Color(0xFF64748B),
+          size: 18,
+          color: iconColor,
         ),
       ),
     );
@@ -522,66 +536,130 @@ class _MonthView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sel = controller.selectedDate;
+    final locStr = controller.locale.toString();
     final firstDay = DateTime(sel.year, sel.month, 1);
     final daysInMonth = DateTime(sel.year, sel.month + 1, 0).day;
     final leadingEmpty = firstDay.weekday - 1;
     final totalCells = leadingEmpty + daysInMonth;
 
-    return GridView.builder(
-      padding: const EdgeInsets.all(12),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7,
-        mainAxisSpacing: 6,
-        crossAxisSpacing: 6,
-      ),
-      itemCount: totalCells,
-      itemBuilder: (context, index) {
-        if (index < leadingEmpty) {
-          return const SizedBox.shrink();
-        }
-        final dayNum = index - leadingEmpty + 1;
-        final date = DateTime(sel.year, sel.month, dayNum);
-        final isSelected = date == sel;
-        final count = controller.appointmentsForDay(date).length;
-
-        return InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            onSelectDay(date);
-            controller.setViewMode(PlannerViewMode.day);
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF0F766E) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? const Color(0xFF0F766E) : const Color(0xFFE2E8F0),
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$dayNum',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: isSelected ? Colors.white : const Color(0xFF0F172A),
+    return Column(
+      children: [
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left_rounded),
+                    onPressed: () {
+                      final prevMonth = DateTime(sel.year, sel.month - 1, 1);
+                      final maxDay = DateTime(prevMonth.year, prevMonth.month + 1, 0).day;
+                      onSelectDay(DateTime(prevMonth.year, prevMonth.month, sel.day.clamp(1, maxDay)));
+                    },
                   ),
-                ),
-                if (count > 0)
                   Text(
-                    '$count',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? Colors.white70 : const Color(0xFF0F766E),
+                    DateFormat('MMMM yyyy', locStr).format(firstDay),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right_rounded),
+                    onPressed: () {
+                      final nextMonth = DateTime(sel.year, sel.month + 1, 1);
+                      final maxDay = DateTime(nextMonth.year, nextMonth.month + 1, 0).day;
+                      onSelectDay(DateTime(nextMonth.year, nextMonth.month, sel.day.clamp(1, maxDay)));
+                    },
+                  ),
+                ],
+              ),
+              SizedBox(
+                height: 36,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  itemCount: 12,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
+                  itemBuilder: (context, mIndex) {
+                    final monthNum = mIndex + 1;
+                    final mDate = DateTime(sel.year, monthNum, 1);
+                    final isCurrentMonth = monthNum == sel.month;
+                    final shortMonth = DateFormat('MMM', locStr).format(mDate);
+
+                    return ChoiceChip(
+                      label: Text(shortMonth),
+                      selected: isCurrentMonth,
+                      onSelected: (_) {
+                        final maxDay = DateTime(sel.year, monthNum + 1, 0).day;
+                        onSelectDay(DateTime(sel.year, monthNum, sel.day.clamp(1, maxDay)));
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(12),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: 6,
+              crossAxisSpacing: 6,
+            ),
+            itemCount: totalCells,
+            itemBuilder: (context, index) {
+              if (index < leadingEmpty) {
+                return const SizedBox.shrink();
+              }
+              final dayNum = index - leadingEmpty + 1;
+              final date = DateTime(sel.year, sel.month, dayNum);
+              final isSelected = date == sel;
+              final count = controller.appointmentsForDay(date).length;
+
+              return InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  onSelectDay(date);
+                  controller.setViewMode(PlannerViewMode.day);
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFF0F766E) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFF0F766E) : const Color(0xFFE2E8F0),
                     ),
                   ),
-              ],
-            ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '$dayNum',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: isSelected ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
+                      if (count > 0)
+                        Text(
+                          '$count',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? Colors.white70 : const Color(0xFF0F766E),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }
